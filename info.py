@@ -35,8 +35,9 @@ REQST_CHANNEL = int(ch) if (ch := environ.get("REQST_CHANNEL", "")) and id_patte
 SUPPORT_CHAT_ID = int(ch) if (ch := environ.get("SUPPORT_CHAT_ID", "")) and id_pattern.search(ch) else None
 
 OWNER = int(os.environ.get("OWNER", "1255023013"))
-CHANNEL_LINK = environ.get('CHANNEL_LINK', 'https://telegram.me/Techifybots')
-GROUP_LINK = environ.get('GROUP_LINK', 'https://telegram.me/TechifySupport')
+
+CHANNEL_LINK = environ.get('CHANNEL_LINK', 'https://t.me/+1xnesOgkN5lhNGVl')
+GROUP_LINK = environ.get('GROUP_LINK', 'https://t.me/+1xnesOgkN5lhNGVl')
 
 DATABASE_URI = environ.get('DATABASE_URI', "")
 DATABASE_NAME = environ.get('DATABASE_NAME', "filter")
