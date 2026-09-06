@@ -1771,22 +1771,34 @@ async def auto_save_on_forward(client, message):
     if not media:
         return
 
-    
-    # File parameters ko structure dena taaki filter database ise accept kare
+    # --- Ultimate Direct Auto-Save Forward Code ---
+@Client.on_message(filters.forwarded & filters.private)
+async def auto_save_on_forward(client, message):
+    # मीडिया टाइप चेक करना (Video, Document या Audio)
+    media_type = message.media.value if message.media else None
+    if media_type not in ["video", "document", "audio"]:
+        return
+
+    media = getattr(message, media_type, None)
+    if not media:
+        return
+
+    # डेटाबेस के लिए फ़ाइल का ढांचा तैयार करना
     media.file_type = media_type
     media.caption = message.caption or ""
 
     try:
         from database.ia_filterdb import save_file
+        # सीधे डेटाबेस के फ़ंक्शन में फ़ाइल को भेजना
         success, info = await save_file(media) 
         
-        if success == "Data-Duplicate":
-            await message.reply_text(f"ℹ️ **{media.file_name}** database me pehle se hi save hai! Aap group me search kar sakte hain.")
-        elif success:
-            await message.reply_text(f"✅ **{media.file_name}** directly database me save ho gayi!")
+        # सेव होने के बाद का रिप्लाई
+        if success == "Data-Duplicate" or "duplicate" in str(info).lower() or str(success).lower() == "false":
+            await message.reply_text(f"ℹ️ **{media.file_name}** database me pehle se hi save hai! Group me search karein.")
         else:
-            await message.reply_text(f"❌ File structure match nahi hua ya error aaya: {info}")
+            await message.reply_text(f"✅ **{media.file_name}** bina kisi command ke directly database me save ho gayi!")
             
     except Exception as e:
-        await message.reply_text(f"❌ Error while saving: {e}")
-        
+        # अगर कोई अंदरूनी दिक्कत होगी तो बोट एरर साफ बताएगा
+        await message.reply_text(f"❌ Saving me dikkat aayi: {e}")
+
