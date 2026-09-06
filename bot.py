@@ -1,28 +1,3 @@
-# ISS CODE KO BOT.PY ME SABSE UPAR RAKHEIN
-from flask import Flask
-from threading import Thread
-import os
-
-flask_app = Flask('')
-
-@flask_app.route('/')
-def home():
-    return "Movie Bot is Alive!"
-
-def run_flask():
-    port = int(os.environ.get('PORT', 10000))
-    flask_app.run(host='0.0.0.0', port=port)
-
-def keep_alive():
-    t = Thread(target=run_flask)
-    t.daemon = True
-    t.start()
-
-keep_alive()
-
-# Iske niche aapka baki ka normal bot code shuru hoga...
-import pyrogram
-# vagairah vagairah...
 import sys
 import time
 import traceback
