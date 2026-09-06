@@ -1528,7 +1528,7 @@ async def auto_filter(client, msg, spoll=False):
         temp.SHORT[message.from_user.id] = message.chat.id
         if settings.get('button'):
             btn = [
-                [InlineKeyboardButton(text=f"{get_size(file.file_size)} ≽ clean_filename(file.file_name)", callback_data=f'file#{file.file_id}')]
+                [InlineKeyboardButton(text=f"{get_size(file.file_size)} ≽ {clean_filename(file.file_name)}", callback_data=f'file#{file.file_id}')]
                 for file in files
             ]
             if offset != "":
