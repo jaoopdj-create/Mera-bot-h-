@@ -3,7 +3,8 @@ import os
 from os import environ, getenv
 from Script import script
 
-id_pattern = re.compile(r'^.\d+$')
+id_pattern = re.compile(r'^[-.\d]+$')
+
 
 def is_enabled(value, default):
     if value.lower() in ["true", "yes", "1", "enable", "y"]:
@@ -53,7 +54,7 @@ TMDB_POSTER = bool(environ.get('TMDB_POSTER', True))
 LANDSCAPE_POSTER = bool(environ.get('LANDSCAPE_POSTER', True))
 
 IS_VERIFY = is_enabled('IS_VERIFY', False)
-LOG_API_CHANNEL = int(environ.get('LOG_API_CHANNEL', ''))
+LOG_API_CHANNEL = int(environ.get('LOG_API_CHANNEL', '0'))
 VERIFY_IMG = environ.get("VERIFY_IMG", "https://i.ibb.co/xqNtSMpS/photo-2025-09-18-15-24-38-7551450511015149572.jpg")
 TUTORIAL = environ.get("TUTORIAL", "https://t.me/TechifyBots")
 TUTORIAL_2 = environ.get("TUTORIAL_2", "https://t.me/TechifyBots")
