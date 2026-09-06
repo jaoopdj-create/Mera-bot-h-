@@ -1756,24 +1756,37 @@ async def advantage_spell_chok(client, message):
     except:
         pass
 
-
-# --- Naya code bina /save ke forward se save karne ke liye ---
+# --- Pukka functional code bina /save ke forward se save karne ke liye ---
 @Client.on_message(filters.forwarded & filters.private)
 async def auto_save_on_forward(client, message):
     if message.from_user.id not in ADMINS:
         return
 
-    media = getattr(message, message.media.value, None) if message.media else None
-    if not media or message.media.value not in ["video", "document", "audio"]:
+    # Media check type nikalna
+    media_type = message.media.value if message.media else None
+    if media_type not in ["video", "document", "audio"]:
         return
+
+    media = getattr(message, media_type, None)
+    if not media:
+        return
+
+    
+    # File parameters ko structure dena taaki filter database ise accept kare
+    media.file_type = media_type
+    media.caption = message.caption or ""
 
     try:
         from database.ia_filterdb import save_file
         success, info = await save_file(media) 
-        if success:
+        
+        if success == "Data-Duplicate":
+            await message.reply_text(f"ℹ️ **{media.file_name}** database me pehle se hi save hai! Aap group me search kar sakte hain.")
+        elif success:
             await message.reply_text(f"✅ **{media.file_name}** directly database me save ho gayi!")
         else:
-            await message.reply_text("❌ File save nahi ho payi (shayad duplicate hai या admin check skip हुआ).")
+            await message.reply_text(f"❌ File structure match nahi hua ya error aaya: {info}")
+            
     except Exception as e:
-        await message.reply_text(f"❌ Error: {e}")
+        await message.reply_text(f"❌ Error while saving: {e}")
         
