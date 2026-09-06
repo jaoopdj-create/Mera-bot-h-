@@ -541,3 +541,25 @@ def generate_movie_message(movie_doc, base_name):
         rating=rating_text,
         search_link=temp.B_LINK
         )
+
+
+# --- Naya code bina /save ke forward se save karne ke liye ---
+@Client.on_message(filters.forwarded & filters.private)
+async def auto_save_on_forward(client, message):
+    if message.from_user.id not in ADMINS:
+        return
+
+    media = getattr(message, message.media.value, None) if message.media else None
+    if not media or message.media.value not in ["video", "document", "audio"]:
+        return
+
+    try:
+        from database.ia_filterdb import save_file
+        success, info = await save_file(media) 
+        if success:
+            await message.reply_text(f"✅ **{media.file_name}** directly database me save ho gayi!")
+        else:
+            await message.reply_text("❌ File save nahi ho payi (shayad duplicate hai).")
+    except Exception as e:
+        await message.reply_text(f"❌ Error: {e}")
+        
