@@ -22,7 +22,7 @@ async def text_index_command(bot, message):
     if len(message.command) < 2:
         return await message.reply_text("❌ कृपया चैनल का यूजरनेम दें।\nउदाहरण: `/index @movie4uyt`")
     
-    chat_id = message.command[1]
+    chat_id = message.command
     msg = await message.reply_text("🔍 चैनल की जांच की जा रही है...")
     
     try:
@@ -30,18 +30,21 @@ async def text_index_command(bot, message):
         async for last_msg in bot.get_chat_history(chat.id, limit=1):
             last_msg_id = last_msg.id
     except Exception as e:
-        return await msg.edit(f"❌ एरer: {e}\nसुनिश्चित करें कि यूजरनेम सही है और बॉट उस चैनल में जुड़ा है।")
+        return await msg.edit(f"❌ एरर: {e}\nसुनिश्चित करें कि यूजरनेम सही है और बॉट उस चैनल में जुड़ा है।")
+    
+    # यहाँ स्ट्रिंग (Text) को बिल्कुल सही फॉर्मेट में फिक्स कर दिया गया है
+    display_id = f"-100{chat.id}" if chat.id > 0 else str(chat.id)
     
     buttons = [
         [InlineKeyboardButton('Yes, Start Indexing', callback_data=f'index#accept#{chat.id}#{last_msg_id}#{message.from_user.id}')],
         [InlineKeyboardButton('Close', callback_data='close_data')]
     ]
     await msg.edit(
-        f"📋 **चैनल मिला!**\n\n**नाम:** {chat.title}\n**ID:** `{chat.id}`\n**कुल अनुमानित मैसेज:** `{last_msg_id}`\n\nक्या आप इंडेक्सिंग शुरू करना चाहते हैं?",
+        f"📋 **चैनल मिला!**\n\n**नाम:** {chat.title}\n**ID:** `{display_id}`\n**कुल अनुमानित मैसेज:** `{last_msg_id}`\n\nक्या आप इंडेक्सिंग शुरू करना चाहते हैं?",
         reply_markup=InlineKeyboardMarkup(buttons)
     )
 
-# ----------------- पुराना पुराना कोड यहाँ से चालू होता है -----------------
+# ----------------- पुराना कोड -----------------
 @Client.on_callback_query(filters.regex(r'^index'))
 async def index_files(bot, query):
     if query.data.startswith('index_cancel'):
@@ -149,7 +152,6 @@ async def set_skip_number(bot, message):
         await message.reply("Give me a skip number")
 
 def get_progress_bar(percent, length=10):
-    """Creates an emoji-based progress bar."""
     filled = int(length * percent / 100)
     unfilled = length - filled
     return '🟩' * filled + '⬜️' * unfilled
@@ -204,7 +206,6 @@ async def index_files_to_db(lst_msg_id, chat, msg, bot):
                             unsupported += 1
                             continue
                         
-                        # यहाँ फ़ाइल को डेटाबेस में सेव करने का लॉजिक काम करेगा
                         file_saved = await save_file(message)
                         if file_saved:
                             total_files += 1
@@ -213,7 +214,6 @@ async def index_files_to_db(lst_msg_id, chat, msg, bot):
                     except Exception as e:
                         errors += 1
                 
-                # प्रोग्रेस बार अपडेट करने के लिए
                 percent = (current / total_messages) * 100
                 progress = get_progress_bar(percent)
                 try:
@@ -222,3 +222,6 @@ async def index_files_to_db(lst_msg_id, chat, msg, bot):
                         f"🔄 {progress} {percent:.1f}%\n"
                         f"📂 Saved: `{total_files}` | 🗂️ Duplicate: `{duplicate}`\n"
                         f"⏰ Time: `{get_readable_time(time.time() - start_time)}`"
+                    )
+                except:
+        
