@@ -32,7 +32,6 @@ async def text_index_command(bot, message):
     except Exception as e:
         return await msg.edit(f"❌ एरर: {e}\nसुनिश्चित करें कि यूजरनेम सही है और बॉट उस चैनल में जुड़ा है।")
     
-    # यहाँ स्ट्रिंग (Text) को बिल्कुल सही फॉर्मेट में फिक्स कर दिया गया है
     display_id = f"-100{chat.id}" if chat.id > 0 else str(chat.id)
     
     buttons = [
@@ -224,4 +223,13 @@ async def index_files_to_db(lst_msg_id, chat, msg, bot):
                         f"⏰ Time: `{get_readable_time(time.time() - start_time)}`"
                     )
                 except:
-        
+                    pass
+            
+            await msg.edit(f"✅ **Indexing Successfully Completed!**\n\n🎯 Total Saved: `{total_files}`\n🔁 Duplicates: `{duplicate}`\n🚫 Errors: `{errors}`")
+        except Exception as e:
+            logger.exception(e)
+            try:
+                await msg.edit(f"❌ Indexing Failed: {e}")
+            except:
+                pass
+                            
