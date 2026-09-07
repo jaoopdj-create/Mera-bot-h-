@@ -512,13 +512,6 @@ async def save_group_settings(group_id, key, value):
     await db.update_settings(group_id, current)
 
 def clean_filename(file_name):
-    prefixes = ('[', '@', 'www.')
-    unwanted = {word.lower() for word in BAD_WORDS}
-    
-    file_name = ' '.join(
-        word for word in file_name.split()
-        if not (word.startswith(prefixes) or word.lower() in unwanted)
-    )
     return file_name
 
 def get_size(size):
