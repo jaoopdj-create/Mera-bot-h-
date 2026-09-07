@@ -22,7 +22,7 @@ async def text_index_command(bot, message):
     if len(message.command) < 2:
         return await message.reply_text("❌ कृपया चैनल का यूजरनेम दें।\nउदाहरण: `/index @movie4uyt`")
     
-    chat_id = message.command
+    chat_id = message.command[1]
     msg = await message.reply_text("🔍 चैनल की जांच की जा रही है...")
     
     try:
