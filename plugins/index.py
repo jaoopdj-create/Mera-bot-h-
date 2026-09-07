@@ -16,6 +16,32 @@ logger.setLevel(logging.INFO)
 
 lock = asyncio.Lock()
 
+# ----------------- नई जोड़ी गई /index टेक्स्ट कमांड -----------------
+@Client.on_message(filters.command('index') & filters.user(ADMINS))
+async def text_index_command(bot, message):
+    if len(message.command) < 2:
+        return await message.reply_text("❌ कृपया चैनल का यूजरनेम दें।\nउदाहरण: `/index @movie4uyt`")
+    
+    chat_id = message.command[1]
+    msg = await message.reply_text("🔍 चैनल की जांच की जा रही है...")
+    
+    try:
+        chat = await bot.get_chat(chat_id)
+        async for last_msg in bot.get_chat_history(chat.id, limit=1):
+            last_msg_id = last_msg.id
+    except Exception as e:
+        return await msg.edit(f"❌ एरer: {e}\nसुनिश्चित करें कि यूजरनेम सही है और बॉट उस चैनल में जुड़ा है।")
+    
+    buttons = [
+        [InlineKeyboardButton('Yes, Start Indexing', callback_data=f'index#accept#{chat.id}#{last_msg_id}#{message.from_user.id}')],
+        [InlineKeyboardButton('Close', callback_data='close_data')]
+    ]
+    await msg.edit(
+        f"📋 **चैनल मिला!**\n\n**नाम:** {chat.title}\n**ID:** `{chat.id}`\n**कुल अनुमानित मैसेज:** `{last_msg_id}`\n\nक्या आप इंडेक्सिंग शुरू करना चाहते हैं?",
+        reply_markup=InlineKeyboardMarkup(buttons)
+    )
+
+# ----------------- पुराना पुराना कोड यहाँ से चालू होता है -----------------
 @Client.on_callback_query(filters.regex(r'^index'))
 async def index_files(bot, query):
     if query.data.startswith('index_cancel'):
@@ -151,18 +177,9 @@ async def index_files_to_db(lst_msg_id, chat, msg, bot):
                 )
                 return
             batches = ceil(total_messages / BATCH_SIZE)
-            batch_times = []
-            await msg.edit(
-                f"📊 Indexing Starting......\n"
-                f"💬 Total Messages: <code>{total_messages}</code>\n"
-                f"📋 Total Fetch: <code> {total_fetch}</code>\n"
-                f"⏰ Elapsed: <code>{get_readable_time(time.time() - start_time)}</code>",
-                reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton('Cancel', callback_data='index_cancel')]])
-            )
             for batch in range(batches):
                 if temp.CANCEL:
                     break
-                batch_start = time.time()
                 start_id = current + 1
                 end_id = min(current + BATCH_SIZE, lst_msg_id)
                 message_ids = range(start_id, end_id + 1)
@@ -174,7 +191,6 @@ async def index_files_to_db(lst_msg_id, chat, msg, bot):
                     errors += len(message_ids)
                     current += len(message_ids)
                     continue
-                save_tasks = []
                 for message in messages:
                     current += 1
                     try:
@@ -184,71 +200,25 @@ async def index_files_to_db(lst_msg_id, chat, msg, bot):
                         elif not message.media:
                             no_media += 1
                             continue
-                        elif message.media not in [enums.MessageMediaType.VIDEO, enums.MessageMediaType.AUDIO, enums.MessageMediaType.DOCUMENT]:
+                        elif message.media not in [enums.MessageMediaType.DOCUMENT, enums.MessageMediaType.VIDEO]:
                             unsupported += 1
                             continue
-                        media = getattr(message, message.media.value, None)
-                        if not media:
-                            unsupported += 1
-                            continue
-                        media.file_type = message.media.value
-                        media.caption = message.caption
-                        save_tasks.append(save_file(media))
-
-                    except Exception:
-                        errors += 1
-                        continue
-                results = await asyncio.gather(*save_tasks, return_exceptions=True)
-                for result in results:
-                    if isinstance(result, Exception):
-                        errors += 1
-                    else:
-                        ok, code = result
-                        if ok:
+                        
+                        # यहाँ फ़ाइल को डेटाबेस में सेव करने का लॉजिक काम करेगा
+                        file_saved = await save_file(message)
+                        if file_saved:
                             total_files += 1
-                        elif code == 0:
+                        else:
                             duplicate += 1
-                        elif code == 2:
-                            errors += 1
-                batch_time = time.time() - batch_start
-                batch_times.append(batch_time)
-                elapsed = time.time() - start_time
-                progress = current - temp.CURRENT
-                percentage = (progress / total_fetch) * 100
-                avg_batch_time = sum(batch_times) / len(batch_times) if batch_times else 1
-                eta = (total_fetch - progress) / BATCH_SIZE * avg_batch_time
-                progress_bar = get_progress_bar(int(percentage))
-                await msg.edit(
-                    f"📊 Indexing Progress 📦 Batch {batch + 1}/{batches}\n"
-                    f"{progress_bar} <code>{percentage:.1f}%</code>\n\n"
-                    f"Total Messages: <code>{total_messages}</code>\n"
-                    f"Total Fetched: <code>{total_fetch}</code>\n"
-                    f"Fetched: <code>{current}</code>\n"
-                    f"Saved: <code>{total_files}</code>\n"
-                    f"Duplicates: <code>{duplicate}</code>\n"
-                    f"Deleted: <code>{deleted}</code>\n"
-                    f"Non-Media: <code>{no_media + unsupported}</code> (Unsupported: <code>{unsupported}</code>)\n"
-                    f"Errors: <code>{errors}</code>\n"
-                    f"⏱️ Elapsed: <code>{get_readable_time(elapsed)}</code>\n"
-                    f"⏰ ETA: <code>{get_readable_time(eta)}</code>",
-                    reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton('Cancel', callback_data='index_cancel')]])
-                )
-            elapsed = time.time() - start_time
-            await msg.edit(
-                f"✅ Indexing Completed!\n"
-                f"Total Messages: <code>{total_messages}</code>\n"
-                f"Total Fetched: <code>{total_fetch}</code>\n"
-                f"Fetched: <code>{current}</code>\n"
-                f"Saved: <code>{total_files}</code>\n"
-                f"Duplicates: <code>{duplicate}</code>\n"
-                f"Deleted: <code>{deleted}</code>\n"
-                f"Non-Media: <code>{no_media + unsupported}</code> (Unsupported: <code>{unsupported}</code>)\n"
-                f"Errors: <code>{errors}</code>\n"
-                f"⏱️ Elapsed: <code>{get_readable_time(elapsed)}</code>",
-                reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton('Close', callback_data='close_data')]])
-            )
-        except Exception as e:
-            await msg.edit(
-                f"❌ Error: <code>{e}</code>",
-                reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton('Close', callback_data='close_data')]])
-            )
+                    except Exception as e:
+                        errors += 1
+                
+                # प्रोग्रेस बार अपडेट करने के लिए
+                percent = (current / total_messages) * 100
+                progress = get_progress_bar(percent)
+                try:
+                    await msg.edit(
+                        f"📊 **Indexing Progress:**\n"
+                        f"🔄 {progress} {percent:.1f}%\n"
+                        f"📂 Saved: `{total_files}` | 🗂️ Duplicate: `{duplicate}`\n"
+                        f"⏰ Time: `{get_readable_time(time.time() - start_time)}`"
