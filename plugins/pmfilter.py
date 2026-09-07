@@ -508,7 +508,7 @@ async def filter_languages_cb_handler(client: Client, query: CallbackQuery):
     if settings.get('button'):
         btn = [
             [
-                InlineKeyboardButton(text=f"{get_size(file.file_size)} ≽ " + clean_filename(file.file_name), callback_data=f'file#{file.file_id}')
+                InlineKeyboardButton(text=f"{get_size(file.file_size)} ≽ {file.file_name}", callback_data=f'file#{file.file_id}')   
             ]
             for file in files
         ]
@@ -626,7 +626,7 @@ async def filter_seasons_cb_handler(client: Client, query: CallbackQuery):
         btn.extend(
             [
                 [
-                    InlineKeyboardButton(text=f"{get_size(f.file_size)} ≽ " + clean_filename(f.file_name), callback_data=f"file#{f.file_id}")
+                    InlineKeyboardButton(text=f"{get_size(f.file_size)} ≽ {f.file_name}", callback_data=f"file#{f.file_id}")
                 ]
                 for f in files
             ]
@@ -1528,7 +1528,7 @@ async def auto_filter(client, msg, spoll=False):
         temp.SHORT[message.from_user.id] = message.chat.id
         if settings.get('button'):
             btn = [
-                [InlineKeyboardButton(text=f"{get_size(file.file_size)} ≽ clean_filename(file.file_name)", callback_data=f'file#{file.file_id}')]
+                [InlineKeyboardButton(text=f"{get_size(file.file_size)} ≽ {file.file_name}", callback_data=f'file#{file.file_id}')]
                 for file in files
             ]
             if offset != "":
