@@ -156,7 +156,7 @@ async def next_page(bot, query):
     if settings.get('button'):
         btn = [
             [
-                InlineKeyboardButton(text=f"{get_size(file.file_size)} ≽ {clean_filename(file.file_name)}", callback_data=f'file#{file.file_id}')
+                InlineKeyboardButton(text=f"{get_size(file.file_size)} ≽ {file.file_name}", callback_data=f'file#{file.file_id}')
             ]
             for file in files
         ]
@@ -388,8 +388,8 @@ async def filter_qualities_cb_handler(client: Client, query: CallbackQuery):
     settings = await get_settings(message.chat.id)
     if settings.get('button'):
         btn = [
-            [
-                InlineKeyboardButton(text=f"{get_size(file.file_size)} ≽ " + clean_filename(file.file_name), callback_data=f'file#{file.file_id}')
+            [   
+                InlineKeyboardButton(text=f"{get_size(file.file_size)} ≽ {file.file_name}", callback_data=f'file#{file.file_id}')
             ]
             for file in files
         ]
