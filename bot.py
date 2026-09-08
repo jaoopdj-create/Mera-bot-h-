@@ -157,11 +157,11 @@ async def techifybots_start():
     logging.info(script.LOGO)
     now = datetime.now(timezone("Asia/Kolkata"))
     await techifybots.send_message(chat_id=LOG_CHANNEL, text=f"**{temp.B_LINK} is restarted!**\n\n📅 Date : `{now.strftime('%d %B, %Y')}`\n⏰ Time : `{now.strftime('%I:%M:%S %p')}`\n🌐 Timezone : `Asia/Kolkata`")
-for admin_id in ADMINS:
-    try:
-        await techifybots.send_message(chat_id=int(admin_id), text=f"🤖 {temp.B_NAME} Restarted Successfully ✅")
-    except Exception as e:
-        logging.warning(f"Couldn't send restart message to admin {admin_id}: {e}")
+    for admin_id in ADMINS:
+        try:
+            await techifybots.send_message(chat_id=int(admin_id), text=f"🤖 {temp.B_NAME} Restarted Successfully ✅")
+       except Exception as e:
+            logging.warning(f"Couldn't send restart message to admin {admin_id}: {e}")
 
     app = web.AppRunner(await web_server())
     await app.setup()
@@ -169,14 +169,14 @@ for admin_id in ADMINS:
     await web.TCPSite(app, bind_address, PORT).start()
     techifybots.loop.create_task(keep_alive())
     
-    try:
-        import subprocess
-        subprocess.Popen(["python", "scraper.py"])
-        logging.info("🚀 Movies4u Scraper background me automatic start ho gaya hai!")
-    except Exception as e:
-        logging.error(f"❌ Scraper start nahi ho paya: {e}")
+        try:
+            import subprocess
+            subprocess.Popen(["python", "scraper.py"])
+            logging.info("🚀 Movies4u Scraper background me automatic start ho gaya hai!")
+       except Exception as e:
+            logging.error(f"❌ Scraper start nahi ho paya: {e}")
   
-    await idle()   
+        await idle()   
 
 if __name__ == '__main__':
     loop = asyncio.get_event_loop()
