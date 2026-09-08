@@ -160,7 +160,7 @@ async def techifybots_start():
     for admin_id in ADMINS:
         try:
             await techifybots.send_message(chat_id=int(admin_id), text=f"🤖 {temp.B_NAME} Restarted Successfully ✅")
-       except Exception as e:
+        except Exception as e:
             logging.warning(f"Couldn't send restart message to admin {admin_id}: {e}")
 
     app = web.AppRunner(await web_server())
@@ -173,7 +173,7 @@ async def techifybots_start():
             import subprocess
             subprocess.Popen(["python", "scraper.py"])
             logging.info("🚀 Movies4u Scraper background me automatic start ho gaya hai!")
-       except Exception as e:
+        except Exception as e:
             logging.error(f"❌ Scraper start nahi ho paya: {e}")
   
     await idle()   
