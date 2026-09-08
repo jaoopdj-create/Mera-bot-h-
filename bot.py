@@ -157,7 +157,7 @@ async def techifybots_start():
     logging.info(script.LOGO)
     now = datetime.now(timezone("Asia/Kolkata"))
     await techifybots.send_message(chat_id=LOG_CHANNEL, text=f"**{temp.B_LINK} is restarted!**\n\n📅 Date : `{now.strftime('%d %B, %Y')}`\n⏰ Time : `{now.strftime('%I:%M:%S %p')}`\n🌐 Timezone : `Asia/Kolkata`")
-    for admin_id in ADMINS:
+for admin_id in ADMINS:
     try:
         await techifybots.send_message(chat_id=int(admin_id), text=f"🤖 {temp.B_NAME} Restarted Successfully ✅")
     except Exception as e:
