@@ -176,7 +176,7 @@ async def techifybots_start():
        except Exception as e:
             logging.error(f"❌ Scraper start nahi ho paya: {e}")
   
-        await idle()   
+    await idle()   
 
 if __name__ == '__main__':
     loop = asyncio.get_event_loop()
