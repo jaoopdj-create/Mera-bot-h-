@@ -1,5 +1,6 @@
 import sys
 import time
+import subprocess
 import traceback
 from datetime import datetime
 import asyncio
@@ -157,17 +158,26 @@ async def techifybots_start():
     now = datetime.now(timezone("Asia/Kolkata"))
     await techifybots.send_message(chat_id=LOG_CHANNEL, text=f"**{temp.B_LINK} is restarted!**\n\n📅 Date : `{now.strftime('%d %B, %Y')}`\n⏰ Time : `{now.strftime('%I:%M:%S %p')}`\n🌐 Timezone : `Asia/Kolkata`")
     for admin_id in ADMINS:
-        try:
+            try:
             await techifybots.send_message(chat_id=int(admin_id), text=f"🤖 {temp.B_NAME} Restarted Successfully ✅")
         except Exception as e:
             logging.warning(f"Couldn't send restart message to admin {admin_id}: {e}")
+
     app = web.AppRunner(await web_server())
     await app.setup()
     bind_address = "0.0.0.0"
     await web.TCPSite(app, bind_address, PORT).start()
     techifybots.loop.create_task(keep_alive())
-    await idle()
     
+    try:
+        import subprocess
+        subprocess.Popen(["python", "scraper.py"])
+        logging.info("🚀 Movies4u Scraper background me automatic start ho gaya hai!")
+    except Exception as e:
+        logging.error(f"❌ Scraper start nahi ho paya: {e}")
+  
+    await idle()   
+
 if __name__ == '__main__':
     loop = asyncio.get_event_loop()
     while True:
@@ -180,3 +190,4 @@ if __name__ == '__main__':
         except KeyboardInterrupt:
             logging.info('Service Stopped Bye 👋')
             break
+            
