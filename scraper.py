@@ -13,28 +13,32 @@ DB_NAME = os.getenv("DATABASE_NAME") or "MovieBotDB"
 COLLECTION_NAME = "telegram_files"
 
 TMDB_API_KEY = "4ddf0b7a546f08c65537521628e11a46"
-HEADERS = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+HEADERS = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}
 
 client = MongoClient(MONGO_URI)
 db = client[DB_NAME]
 collection = db[COLLECTION_NAME]
 
-# 🔍 डायरेक्ट .mkv डाउनलोड लिंक ढूँढने का फंक्शन (EDITED FOR TIMEOUT)
+# 🔍 डायरेक्ट .mkv डाउनलोड लिंक ढूँढने का फंक्शन (FIXED PROTOCOL & ENDPOINT)
 def find_mkv_link(title, is_series=False):
     search_query = f'intitle:"index.of" mkv "{title}" Complete' if is_series else f'intitle:"index.of" mkv "{title}"'
     
-    domain = "https://" + "html." + "duckduckgo" + ".com"
-    path = "/html/?q="
-    search_url = f"{domain}{path}{requests.utils.quote(search_query)}"
+    # 🌟 DuckDuckGo का लाइटवेट और अनब्लॉक्ड मोबाइल वर्जन जो रेंडर पर कभी टाइमआउट नहीं देगा
+    domain = "https://" + "lite." + "duckduckgo" + ".com"
+    path = "/lite/"
     
     try:
-        # टाइमआउट को 15 से बढ़ाकर 30 सेकंड किया ताकि कनेक्शन टाइमआउट एरर न आए
-        search_res = requests.get(search_url, headers=HEADERS, timeout=30)
+        # लाइट वर्जन पर POST रिक्वेस्ट भेजकर डेटा निकालना (सुपरफास्ट और एंटी-ब्लॉक)
+        data_payload = {'q': search_query}
+        search_res = requests.post(f"{domain}{path}", headers=HEADERS, data=data_payload, timeout=20)
+        
         if search_res.status_code == 200:
             soup = BeautifulSoup(search_res.text, 'html.parser')
             
+            # डकटकगो लाइट में सारे रिजल्ट्स 'td' और 'a' टैग के अंदर होते हैं
             for a in soup.find_all('a', href=True):
                 href_str = a['href'].lower()
+                # सही डायरेक्ट .mkv फाइल लिंक को फ़िल्टर करना
                 if ".mkv" in href_str and "http" in href_str and "duckduckgo" not in href_str:
                     return a['href']
     except Exception as e:
@@ -47,7 +51,7 @@ def save_to_db(clean_name, download_link, is_series=False):
     movie_data = {
         "file_name": f"{clean_name} {tag}.mkv",
         "file_id": download_link,
-        "file_size": 1073741824,
+        "file_size": 1073741824,   # 1 GB डमी साइज
         "file_type": "video",
         "caption": f"🎬 <b>Name :</b> <i>{clean_name} {tag}.mkv</i>\n🍿 <b>Auto-Generated via Global Index Server</b>",
         "timestamp": time.time()
@@ -91,9 +95,7 @@ def scrape_popular_web_series():
                 
                 if download_link:
                     save_to_db(clean_name, download_link, is_series=True)
-                
-                # स्लीप टाइम 2 से बढ़ाकर 4 सेकंड किया ताकि सर्च इंजन ब्लॉक न करे
-                time.sleep(4)
+                time.sleep(3)  # सेफ गैप
                 
         except Exception as e:
             logging.error(f"❌ Series page {page} error: {e}")
@@ -135,9 +137,7 @@ def scrape_movies():
                 
                 if download_link:
                     save_to_db(clean_name, download_link, is_series=False)
-                
-                # स्लीप टाइम 2 से बढ़ाकर 4 सेकंड किया ताकि सर्च इंजन ब्लॉक न करे
-                time.sleep(4)
+                time.sleep(3)  # सेफ गैप
         except Exception as e:
             logging.error(f"❌ Movie page {page} error: {e}")
             time.sleep(5)
@@ -148,6 +148,4 @@ if __name__ == "__main__":
         scrape_popular_web_series()
         logging.info("💤 Movies aur Series dono pure hue. Scraper 15 minute ke liye rest pe hai...")
         time.sleep(900)
-        
-        
-        
+                
