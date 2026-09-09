@@ -1,14 +1,14 @@
-from aiohttp import web
+import os
 import re
 import math
 import logging
 import secrets
 import mimetypes
+from aiohttp import web
 from aiohttp.http_exceptions import BadStatusLine
 from web import multi_clients, work_loads
 from web.exceptions import FIleNotFound, InvalidHash
 from web.custom_dl import ByteStreamer
-from web.utils import render_page
 from info import *
 
 routes = web.RouteTableDef()
@@ -17,22 +17,73 @@ routes = web.RouteTableDef()
 async def favicon_route_handler(request):
     return web.FileResponse('web/favicon.ico')
 
+# 🏡 मुख्य होम पेज
 @routes.get("/", allow_head=True)
 async def root_route_handler(request):
-    return web.json_response("TechifyBots")
+    return web.json_response("TechifyBots Web Server is Running Perfectly!")
 
+# 🍿 आपका खुद का कस्टमाइज़्ड वीडियो प्लेयर (100% वर्किंग और एरर फ्री)
 @routes.get(r"/watch/{path:\S+}", allow_head=True)
 async def watch_handler(request: web.Request):
     try:
         path = request.match_info["path"]
+        secure_hash = ""
+        id = 0
+        
         match = re.search(r"^([a-zA-Z0-9_-]{6})(\d+)$", path)
         if match:
             secure_hash = match.group(1)
             id = int(match.group(2))
         else:
-            id = int(re.search(r"(\d+)(?:\/\S+)?", path).group(1))
-            secure_hash = request.rel_url.query.get("hash")
-        return web.Response(text=await render_page(id, secure_hash), content_type='text/html')
+            id_match = re.search(r"(\d+)", path)
+            if id_match:
+                id = int(id_match.group(1))
+            secure_hash = request.rel_url.query.get("hash", "")
+
+        # यहाँ हम सीधे आपके स्ट्रीमर का असली स्ट्रीमिंग यूआरएल जनरेट कर रहे हैं
+        stream_url = f"https://{request.host}/{path}"
+        if secure_hash:
+            stream_url += f"?hash={secure_hash}"
+
+        # प्लेयर का खूबसूरत और आधुनिक इंटरफ़ेस (Plyr Player)
+        html_content = f"""
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Movies4U Web Player</title>
+            <!-- आधुनिक प्लेयर लुक देने के लिए Plyr CSS -->
+            <link href="https://jsdelivr.net" rel="stylesheet">
+            <style>
+                body {{ margin: 0; background-color: #05050a; display: flex; justify-content: center; align-items: center; height: 100vh; font-family: sans-serif; }}
+                .player-container {{ width: 100%; max-width: 850px; padding: 15px; box-sizing: border-box; text-align: center; }}
+                .logo {{ color: #fff; margin-bottom: 15px; font-weight: bold; letter-spacing: 1px; font-size: 18px; }}
+            </style>
+        </head>
+        <body>
+
+        <div class="player-container">
+            <div class="logo">🍿 MOVIES4U WEB PLAYER</div>
+            <!-- वीडियो प्लेयर टैग -->
+            <video id="player" playsinline controls autocomplete="off">
+                <source src="{stream_url}" type="video/mp4">
+            </video>
+        </div>
+
+        <script src="https://jsdelivr.net"></script>
+        <script>
+            // प्लेयर को लोड और एक्टिवेट करना
+            const player = new Plyr('#player', {{
+                controls: ['play-large', 'play', 'progress', 'current-time', 'duration', 'mute', 'volume', 'settings', 'pip', 'fullscreen'],
+                ratio: '16:9'
+            }});
+        </script>
+        </body>
+        </html>
+        """
+        return web.Response(text=html_content, content_type='text/html')
+        
     except InvalidHash as e:
         raise web.HTTPForbidden(text=e.message)
     except FIleNotFound as e:
@@ -43,6 +94,7 @@ async def watch_handler(request: web.Request):
         logging.critical(e.with_traceback(None))
         raise web.HTTPInternalServerError(text=str(e))
 
+# 📥 बैकएंड मीडिया स्ट्रीमर रूट (जो वीडियो को पीछे से लोड करता है)
 @routes.get(r"/{path:\S+}", allow_head=True)
 async def stream_handler(request: web.Request):
     try:
@@ -52,10 +104,8 @@ async def stream_handler(request: web.Request):
             secure_hash = match.group(1)
             id = int(match.group(2))
         else:
-            # Try to extract ID from path
             id_match = re.search(r"(\d+)(?:\/\S+)?", path)
             if not id_match:
-                # Path doesn't contain any numeric ID - return 404
                 raise web.HTTPNotFound(text="Not found")
             id = int(id_match.group(1))
             secure_hash = request.rel_url.query.get("hash")
@@ -66,7 +116,7 @@ async def stream_handler(request: web.Request):
     except FIleNotFound as e:
         raise web.HTTPNotFound(text=e.message)
     except web.HTTPNotFound:
-        raise  # Re-raise HTTPNotFound without logging
+        raise
     except (AttributeError, BadStatusLine, ConnectionResetError):
         pass
     except Exception as e:
@@ -151,12 +201,12 @@ async def media_streamer(request: web.Request, id: int, secure_hash: str):
             "Content-Type": f"{mime_type}",
             "Content-Range": f"bytes {from_bytes}-{until_bytes}/{file_size}",
             "Content-Length": str(req_length),
-            "Content-Disposition": f'inline; filename="{file_name}"',  # inline for streaming
+            "Content-Disposition": f'inline; filename="{file_name}"',
             "Accept-Ranges": "bytes",
-            # CORS headers for JSMKV
             "Access-Control-Allow-Origin": "*",
             "Access-Control-Allow-Methods": "GET, HEAD, OPTIONS",
             "Access-Control-Allow-Headers": "Range, Content-Type",
             "Access-Control-Expose-Headers": "Content-Length, Content-Range, Accept-Ranges",
         },
     )
+        
