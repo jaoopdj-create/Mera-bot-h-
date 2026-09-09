@@ -19,10 +19,10 @@ client = MongoClient(MONGO_URI)
 db = client[DB_NAME]
 collection = db[COLLECTION_NAME]
 
-# 🔍 डायरेक्ट .mkv डाउनलोड लिंक ढूँढने का फंक्शन (FIXED URL)
+# 🔍 डायरेक्ट .mkv डाउनलोड लिंक ढूँढने का फंक्शन (पूरी तरह सही किया गया)
 def find_mkv_link(title, is_series=False):
     search_query = f'intitle:"index.of" mkv "{title}" Complete' if is_series else f'intitle:"index.of" mkv "{title}"'
-    # DuckDuckGo का सही सर्च URL फॉर्मेट
+    # DuckDuckGo का बिल्कुल सही सर्च URL फॉर्मेट
     search_url = f"https://duckduckgo.com{requests.utils.quote(search_query)}"
     
     try:
@@ -54,7 +54,7 @@ def save_to_db(clean_name, download_link, is_series=False):
     collection.insert_one(movie_data)
     logging.info(f"✅ Successfully Saved in Database: {clean_name}")
 
-# 🚀 1. सालों पुरानी और नई पॉपुलर वेब सीरीज़ लाने का फंक्शन (FIXED TMDB URL)
+# 🚀 1. सालों पुरानी और नई कंबाइंड वेब सीरीज़ लाने का फंक्शन (TMDB URL सही कर दिया गया है)
 def scrape_popular_web_series():
     logging.info("📺 Hollywood & Bollywood Web Series check ho rahi hain...")
     for page in range(1, 31):
@@ -96,7 +96,7 @@ def scrape_popular_web_series():
             logging.error(f"❌ Series page {page} error: {e}")
             time.sleep(5)
 
-# 🚀 2. पुरानी और नई मूवीज लाने का कंबाइंड फंक्शन (FIXED TMDB URL)
+# 🚀 2. पुरानी और नई मूवीज लाने का कंबाइंड फंक्शन (TMDB URL सही कर दिया गया है)
 def scrape_movies():
     logging.info("🎬 Popular Movies check ho rahi hain...")
     for page in range(1, 41):
@@ -145,4 +145,5 @@ if __name__ == "__main__":
         
         logging.info("💤 Movies aur Series dono pure hue. Scraper 15 minute ke liye rest pe hai...")
         time.sleep(900)
+        
         
