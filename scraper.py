@@ -14,7 +14,7 @@ MONGO_URI = os.getenv("DATABASE_URI") or os.getenv("MONGO_URI") or "YOUR_MONGODB
 DB_NAME = os.getenv("DATABASE_NAME") or "YOUR_DATABASE_NAME"
 COLLECTION_NAME = "telegram_files"  # ऑटो-फिल्टर बॉट का डिफ़ॉल्ट कलेक्शन नाम
 
-WEBSITE_URL = "https://movies4u.vip"     # Movies4u का एक्टिव लिंक
+WEBSITE_URL =  "https://movies4u.kg"    # Movies4u का एक्टिव लिंक
 HEADERS = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
 
 # डेटाबेस कनेक्शन चेक
