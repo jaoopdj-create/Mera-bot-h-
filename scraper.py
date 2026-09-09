@@ -19,17 +19,17 @@ client = MongoClient(MONGO_URI)
 db = client[DB_NAME]
 collection = db[COLLECTION_NAME]
 
-# 🔍 डायरेक्ट .mkv डाउनलोड लिंक ढूँढने का फंक्शन
+# 🔍 डायरेक्ट .mkv डाउनलोड लिंक ढूँढने का फंक्शन (EDITED FOR TIMEOUT)
 def find_mkv_link(title, is_series=False):
     search_query = f'intitle:"index.of" mkv "{title}" Complete' if is_series else f'intitle:"index.of" mkv "{title}"'
     
-    # सिस्टम इसे बदल न पाए इसलिए हमने डोमेन और पाथ को टुकड़ों में जोड़ दिया है
     domain = "https://" + "html." + "duckduckgo" + ".com"
     path = "/html/?q="
     search_url = f"{domain}{path}{requests.utils.quote(search_query)}"
     
     try:
-        search_res = requests.get(search_url, headers=HEADERS, timeout=15)
+        # टाइमआउट को 15 से बढ़ाकर 30 सेकंड किया ताकि कनेक्शन टाइमआउट एरर न आए
+        search_res = requests.get(search_url, headers=HEADERS, timeout=30)
         if search_res.status_code == 200:
             soup = BeautifulSoup(search_res.text, 'html.parser')
             
@@ -61,7 +61,6 @@ def scrape_popular_web_series():
     for page in range(1, 31):
         logging.info(f"📄 TMDB Web Series Page {page} process ho raha hai...")
         
-        # 100% सटीक और सुरक्षित TMDB API URL स्ट्रक्चर (टुकड़ों में जोड़ा हुआ ताकि सिस्टम बदल न सके)
         base_api = "https://" + "api." + "themoviedb" + ".org"
         endpoint = "/3" + "/discover" + "/tv"
         tmdb_url = f"{base_api}{endpoint}?api_key={TMDB_API_KEY}&page={page}&with_original_language=hi|en"
@@ -92,7 +91,9 @@ def scrape_popular_web_series():
                 
                 if download_link:
                     save_to_db(clean_name, download_link, is_series=True)
-                time.sleep(2)
+                
+                # स्लीप टाइम 2 से बढ़ाकर 4 सेकंड किया ताकि सर्च इंजन ब्लॉक न करे
+                time.sleep(4)
                 
         except Exception as e:
             logging.error(f"❌ Series page {page} error: {e}")
@@ -104,7 +105,6 @@ def scrape_movies():
     for page in range(1, 41):
         logging.info(f"📄 TMDB Movies Page {page} process ho raha hai...")
         
-        # 100% सटीक और सुरक्षित TMDB API URL स्ट्रक्चर (टुकड़ों में जोड़ा हुआ ताकि सिस्टम बदल न सके)
         base_api = "https://" + "api." + "themoviedb" + ".org"
         endpoint = "/3" + "/discover" + "/movie"
         tmdb_url = f"{base_api}{endpoint}?api_key={TMDB_API_KEY}&page={page}&with_original_language=hi|en"
@@ -135,7 +135,9 @@ def scrape_movies():
                 
                 if download_link:
                     save_to_db(clean_name, download_link, is_series=False)
-                time.sleep(2)
+                
+                # स्लीप टाइम 2 से बढ़ाकर 4 सेकंड किया ताकि सर्च इंजन ब्लॉक न करे
+                time.sleep(4)
         except Exception as e:
             logging.error(f"❌ Movie page {page} error: {e}")
             time.sleep(5)
@@ -146,6 +148,6 @@ if __name__ == "__main__":
         scrape_popular_web_series()
         logging.info("💤 Movies aur Series dono pure hue. Scraper 15 minute ke liye rest pe hai...")
         time.sleep(900)
-                
+        
         
         
