@@ -12,7 +12,7 @@ MONGO_URI = os.getenv("MONGO_URI") or os.getenv("DATABASE_URI") or "YOUR_MONGODB
 DB_NAME = os.getenv("DATABASE_NAME") or "MovieBotDB"
 COLLECTION_NAME = "telegram_files"
 
-TMDB_API_KEY = "a8c9b32a74c431cb0272b1124adfb8a4"
+TMDB_API_KEY = "4ddf0b7a546f08c65537521628e11a46"
 HEADERS = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
 
 client = MongoClient(MONGO_URI)
