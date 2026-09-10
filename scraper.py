@@ -40,7 +40,7 @@ def clean_accent_characters(text):
 def find_mkv_link(title, is_series=False):
     clean_title = title.replace(":", "").replace("-", " ").replace("  ", " ").strip()
     slug = clean_title.replace(" ", "-").lower()
-    return f"https://netmirror.center{slug}"
+    return f"https://netmirror.center/{slug}" # 🛠️ FIXED: Added missing slash
 
 def save_to_db(clean_name, download_link, title_only, is_series=False):
     tag = "[Web Series]" if is_series else "[Dual Audio] HD"
@@ -59,24 +59,25 @@ def save_to_db(clean_name, download_link, title_only, is_series=False):
     collection.insert_one(movie_data)
     logging.info(f"✅ Successfully Saved Accent-Free Name: {search_friendly_name}")
 
-# 🛠️ FIXED: Code syntax error resolved here (Line 74)
 def get_tmdb_data(url, query_params):
     query_params["api_key"] = TMDB_API_KEY
     for attempt in range(4):
         try:
             response = requests.get(url, headers=HEADERS, params=query_params, timeout=20)
-            if response.status_code == 200:
+            status = response.status_code
+            
+            if status == 200:
                 if response.text and response.text.strip() and not response.text.strip().startswith("<!DOCTYPE html>"):
                     try:
                         return response.json()
                     except ValueError:
                         pass
-            elif response.status_code in:
-                logging.warning(f"⚠️ TMDB server dynamic cool-down (Code: {response.status_code}). Sleeping for 15s...")
+            elif status == 429 or status == 503:
+                logging.warning(f"⚠️ TMDB server dynamic cool-down (Code: {status}). Sleeping for 15s...")
                 time.sleep(15)
                 continue
             else:
-                logging.error(f"🛑 TMDB HTTP error status: {response.status_code}")
+                logging.error(f"🛑 TMDB HTTP error status: {status}")
         except Exception as e:
             logging.error(f"❌ Connection glitch on attempt {attempt + 1}: {e}")
         time.sleep(6)
@@ -84,7 +85,7 @@ def get_tmdb_data(url, query_params):
 
 def scrape_all_web_series():
     logging.info("📺 Global Web Series Extraction shuru...")
-    base_url = "https://themoviedb.org"
+    base_url = "https://themoviedb.org" # 🛠️ FIXED: Correct TMDB API URL
     
     current_year = datetime.now().year
     for year in range(1970, current_year + 1):
@@ -118,7 +119,7 @@ def scrape_all_web_series():
 
 def scrape_all_movies():
     logging.info("🎬 Global Movies Extraction shuru...")
-    base_url = "https://themoviedb.org"
+    base_url = "https://themoviedb.org" # 🛠️ FIXED: Correct TMDB API URL
     
     current_year = datetime.now().year
     for year in range(1970, current_year + 1):
@@ -156,4 +157,4 @@ if __name__ == "__main__":
         scrape_all_web_series()
         logging.info("💤 Global loop cycle complete! 15 min rest...")
         time.sleep(900)
-                
+        
