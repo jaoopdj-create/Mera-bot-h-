@@ -712,7 +712,18 @@ async def cb_handler(client: Client, query: CallbackQuery):
         user = query.message.reply_to_message.from_user.id if query.message.reply_to_message else query.from_user.id
         if int(user) != 0 and query.from_user.id != int(user):
             return await query.answer(script.ALRT_TXT.format(query.from_user.first_name), show_alert=True)
-        await query.answer(url=f"https://telegram.me/{temp.U_NAME}?start=file_{query.message.chat.id}_{file_id}")
+        
+        # 🛠️ FIXED: Scraper wale mode ke liye direct browser download link logic
+        if "DOWNLOAD_LINK_MODE" in str(file_id):
+            await query.answer("📥 Opening Direct Download Link...", show_alert=True)
+            slug = str(file_id).replace("DOWNLOAD_LINK_MODE_", "")
+            download_url = f"https://netmirror.center{slug}"
+            await query.message.reply_text(
+                text=f"🎬 **Aapki Movie Taiyar Hai!**\n\n🍿 **Direct Download/Stream Link:**\n{download_url}",
+                reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("📥 Fast Download / Stream", url=download_url)]])
+            )
+        else:
+            await query.answer(url=f"https://telegram.me{temp.U_NAME}?start=file_{query.message.chat.id}_{file_id}")
 
     elif query.data.startswith("sendfiles"):
         clicked = query.from_user.id
@@ -1626,9 +1637,14 @@ async def auto_filter(client, msg, spoll=False):
             )
             temp.IMDB_CAP[message.from_user.id] = cap
             if not settings.get('button'):
-                cap += "\n\n<b>♻️ <u>ʀᴇꜱᴜʟᴛꜱ ꜰᴏʀ ʏᴏᴜʀ sᴇᴀʀᴄʜ</u></b>"
-                for idx, file in enumerate(files, start=1):
-                    cap += f"<b>\n{idx}. <a href='https://telegram.me/{temp.U_NAME}?start=file_{message.chat.id}_{file.file_id}'>[{get_size(file.file_size)}] {clean_filename(file.file_name)}\n</a></b>"
+               cap += "\n\n<b>♻️ <u>ʀᴇꜱᴜʟᴛꜱ ꜰᴏʀ ʏᴏᴜʀ sᴇᴀʀᴄʜ</u></b>"
+               for idx, file in enumerate(files, start=1):
+                # 🛠️ FIXED 1: Scraper wale links ke liye direct browser download check
+                if "DOWNLOAD_LINK_MODE" in str(file.file_id):
+                    slug_name = file.file_name.replace(' ', '-').lower()
+                    cap += f"<b>\n{idx}. 📥 <a href='https://netmirror.center{slug_name}'>[{get_size(file.file_size)}] {clean_filename(file.file_name)} (Direct Link)\n</a></b>"
+                else:
+                    cap += f"<b>\n{idx}. 🎬 <a href='https://telegram.me/{temp.U_NAME}?start=file_{message.chat.id}_{file.file_id}'>[{get_size(file.file_size)}] {clean_filename(file.file_name)}\n</a></b>"
         else:
             temp.IMDB_CAP[message.from_user.id] = None
             if FAST_MODE:
@@ -1637,7 +1653,12 @@ async def auto_filter(client, msg, spoll=False):
                 else:
                     cap = f"<b>🙋‍♂ {message.from_user.mention}\n⏰ ʀᴇsᴜʟᴛ ɪɴ : <code>{remaining_seconds}</code> ꜱᴇᴄᴏɴᴅs\n\n♻️ <u>ʀᴇꜱᴜʟᴛꜱ ꜰᴏʀ ʏᴏᴜʀ sᴇᴀʀᴄʜ</u>\n\n</b>"
                     for idx, file in enumerate(files, start=1):
-                        cap += f"<b>\n{idx}. <a href='https://telegram.me/{temp.U_NAME}?start=file_{message.chat.id}_{file.file_id}'>[{get_size(file.file_size)}] {clean_filename(file.file_name)}\n</a></b>"
+                        # 🛠️ FIXED 2: Scraper wale links ke liye direct browser download check
+                        if "DOWNLOAD_LINK_MODE" in str(file.file_id):
+                            slug_name = file.file_name.replace(' ', '-').lower()
+                            cap += f"<b>\n{idx}. 📥 <a href='https://netmirror.center{slug_name}'>[{get_size(file.file_size)}] {clean_filename(file.file_name)} (Direct Link)\n</a></b>"
+                        else:
+                            cap += f"<b>\n{idx}. 🎬 <a href='https://telegram.me/{temp.U_NAME}?start=file_{message.chat.id}_{file.file_id}'>[{get_size(file.file_size)}] {clean_filename(file.file_name)}\n</a></b>"
             else:
                 if settings.get('button'):
                     cap = f"<b>🙋‍♂ {message.from_user.mention}\n📝 ᴛᴏᴛᴀʟ ꜰɪʟᴇꜱ : <code>{total_results}</code>\n\n♻️ <u>ʀᴇꜱᴜʟᴛꜱ ꜰᴏʀ ʏᴏᴜʀ sᴇᴀʀᴄʜ</u>\n\n</b>"
@@ -1645,7 +1666,12 @@ async def auto_filter(client, msg, spoll=False):
                     cap = f"<b>🙋‍♂ {message.from_user.mention}\n📝 ᴛᴏᴛᴀʟ ꜰɪʟᴇꜱ : <code>{total_results}</code>\n\n♻️ <u>ʀᴇꜱᴜʟᴛꜱ ꜰᴏʀ ʏᴏᴜʀ sᴇᴀʀᴄʜ</u>\n\n</b>"
 
                     for idx, file in enumerate(files, start=1):
-                        cap += f"<b>\n{idx}. <a href='https://telegram.me/{temp.U_NAME}?start=file_{message.chat.id}_{file.file_id}'>[{get_size(file.file_size)}] {clean_filename(file.file_name)}\n</a></b>"
+                        # 🛠️ FIXED 3: Scraper wale links ke liye direct browser download check
+                        if "DOWNLOAD_LINK_MODE" in str(file.file_id):
+                            slug_name = file.file_name.replace(' ', '-').lower()
+                            cap += f"<b>\n{idx}. 📥 <a href='https://netmirror.center{slug_name}'>[{get_size(file.file_size)}] {clean_filename(file.file_name)} (Direct Link)\n</a></b>"
+                        else:
+                            cap += f"<b>\n{idx}. 🎬 <a href='https://telegram.me/{temp.U_NAME}?start=file_{message.chat.id}_{file.file_id}'>[{get_size(file.file_size)}] {clean_filename(file.file_name)}\n</a></b>"
         sent = None
         try:
             if imdb and imdb.get('poster'):
