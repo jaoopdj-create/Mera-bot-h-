@@ -19,31 +19,33 @@ client = MongoClient(MONGO_URI)
 db = client[DB_NAME]
 collection = db[COLLECTION_NAME]
 
-# 🔍 डायरेक्ट .mkv स्ट्रीमिंग/डाउनलोड लिंक जनरेटर
+# 🔍 ओपन-सोर्स वीडियो इंडेक्स सर्वर से डायरेक्ट लिंक निकालने का फ़ंक्शन
 def find_mkv_link(title, is_series=False):
     clean_title = title.replace(":", "").replace("-", " ").replace("  ", " ").strip()
     slug = clean_title.replace(" ", "-").lower()
     
-    links_backup = [
-        f"https://netmirror.center{slug}",
-        f"https://archive.org{slug}/{slug}.mkv",
-        f"https://vidsrc.me{slug}"
-    ]
-    return links_backup
+    # Bot ke link streaming button ke liye direct pehla functional link string format me bhejenge
+    primary_link = f"https://netmirror.center{slug}"
+    return primary_link
 
-# 📥 डेटाबेस में डेटा सेव करने का फंक्शन
-def save_to_db(clean_name, download_link, is_series=False):
+# 📥 डेटाबेस में डेटा सेव करने का फंक्शन (CHANGES DONE HERE)
+def save_to_db(clean_name, download_link, title_only, is_series=False):
     tag = "[Web Series]" if is_series else "[Dual Audio] HD"
+    
     movie_data = {
-        "file_name": f"{clean_name} {tag}.mkv",
-        "file_id": download_link,
+        # 1. BADLAV: file_name ko bilkul clean kiya taaki bot search me dhoond sake (Jaise: "The Coronation")
+        "file_name": title_only.strip(),  
+        
+        # 2. BADLAV: file_id me backup array ke bajaye direct working link string pass ki
+        "file_id": download_link,  
+        
         "file_size": 1073741824,   # 1 GB डमी साइज
         "file_type": "video",
         "caption": f"🎬 <b>Name :</b> <i>{clean_name} {tag}.mkv</i>\n🍿 <b>Auto-Generated via Global Index Server</b>",
         "timestamp": time.time()
     }
     collection.insert_one(movie_data)
-    logging.info(f"✅ Successfully Saved in Database: {clean_name}")
+    logging.info(f"✅ Successfully Saved Clean Title in Database: {title_only}")
 
 # 🛠️ Safe Response Fetcher
 def get_tmdb_data(url):
@@ -56,18 +58,16 @@ def get_tmdb_data(url):
         logging.error(f"❌ Connection error: {e}")
     return None
 
-# 🚀 1. YEAR-BY-YEAR BYPASS: Duniya ki sari Web Series fetch karne ka loop
+# 🚀 1. Year-by-Year Global Web Series Scraper
 def scrape_all_web_series():
     logging.info("📺 Global Web Series Year-by-Year extraction shuru ho rahi hai...")
-    base_api = "https://api.themoviedb.org"
+    base_api = "https://themoviedb.org"
     endpoint = "/3/discover/tv"
     
     current_year = datetime.now().year
-    # 1970 se lekar aane wale saal tak har year ki alag deep-scraping hogi
     for year in range(1970, current_year + 1):
         logging.info(f"📅 [WEB SERIES] Year {year} ka data fetch ho raha hai...")
         
-        # Pehle check karenge us year me kitne pages hain
         init_url = f"{base_api}{endpoint}?api_key={TMDB_API_KEY}&page=1&first_air_date_year={year}"
         init_res = get_tmdb_data(init_url)
         if not init_res:
@@ -88,22 +88,21 @@ def scrape_all_web_series():
                 
                 clean_name = f"{title} ({year})"
                 
-                # Database redundancy check
-                if collection.find_one({"file_name": {"$regex": title, "$options": "i"}}):
+                # Check using clean title
+                if collection.find_one({"file_name": {"$regex": f"^{title}$", "$options": "i"}}):
                     continue
                     
                 download_link = find_mkv_link(title, is_series=True)
-                save_to_db(clean_name, download_link, is_series=True)
-                time.sleep(0.2) # API Block standard bypass
+                save_to_db(clean_name, download_link, title_only=title, is_series=True)
+                time.sleep(0.2)
 
-# 🚀 2. YEAR-BY-YEAR BYPASS: Duniya ki sari Movies fetch karne ka loop
+# 🚀 2. Year-by-Year Global Movies Scraper
 def scrape_all_movies():
     logging.info("🎬 Global Movies Year-by-Year extraction shuru ho rahi hai...")
-    base_api = "https://api.themoviedb.org"
+    base_api = "https://themoviedb.org"
     endpoint = "/3/discover/movie"
     
     current_year = datetime.now().year
-    # 1970 se lekar abhi tak ki sabhi purani aur nayi movies bypass system se niklengi
     for year in range(1970, current_year + 1):
         logging.info(f"📅 [MOVIES] Year {year} ka data fetch ho raha hai...")
         
@@ -127,17 +126,18 @@ def scrape_all_movies():
                 
                 clean_name = f"{title} ({year})"
                 
-                if collection.find_one({"file_name": {"$regex": title, "$options": "i"}}): 
+                if collection.find_one({"file_name": {"$regex": f"^{title}$", "$options": "i"}}): 
                     continue
                     
                 download_link = find_mkv_link(title, is_series=False)
-                save_to_db(clean_name, download_link, is_series=False)
+                save_to_db(clean_name, download_link, title_only=title, is_series=False)
                 time.sleep(0.2)
 
 if __name__ == "__main__":
     while True:
+        # Purana kharab data clear karne ke liye aap chahein toh pehle collection manually drop kar sakte hain
         scrape_all_movies()
         scrape_all_web_series()
         logging.info("💤 Pura world database cycle complete! 15 min rest pe jaa rahe hain...")
         time.sleep(900)
-        
+    
