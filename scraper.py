@@ -33,13 +33,14 @@ def clean_accent_characters(text):
 def find_mkv_link(title):
     clean_title = title.replace(":", "").replace("-", " ").replace("  ", " ").strip()
     slug = clean_title.replace(" ", "-").lower()
-    return f"https://netmirror.center{slug}"
+    return f"https://netmirror.center/{slug}"
 
 def save_to_db(clean_name, download_link, title_only, is_series=False):
     tag = "[Web Series]" if is_series else "[Dual Audio] HD"
     search_friendly_name = clean_accent_characters(title_only.strip().strip('"').strip("'").strip())
     
     movie_data = {
+        "_id": f"DOWNLOAD_LINK_MODE_{search_friendly_name.replace(' ', '-').lower()}", # 🌟 YEH VALI NAYI LINE INSERT KAREIN
         "file_name": search_friendly_name,              
         "file_id": f"DOWNLOAD_LINK_MODE_{search_friendly_name.replace(' ', '-').lower()}", # Auto unique slug token flag
         "file_size": 1073741824,                       
@@ -52,6 +53,7 @@ def save_to_db(clean_name, download_link, title_only, is_series=False):
     # Direct Force Insert to trigger automatic collection visibility
     collection.insert_one(movie_data)
     logging.info(f"🔥 LIVE ADDED TO MONGODB -> {search_friendly_name}")
+
 
 def get_tmdb_data(url):
     for attempt in range(4):
