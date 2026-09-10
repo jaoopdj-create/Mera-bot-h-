@@ -258,15 +258,25 @@ async def get_bad_files(query, file_type=None):
     return files, len(files)
 
 async def get_file_details(query):
-    filter = {"file_id": query}
+    # 🛠️ ULTRA-DIRECT FIX: Bot ko direct target table par bhej rahe hain
+    from database.ia_filterdb import client
+    import os
     
-    # 🛠️ FIXED: Sabse pehle naye scraper wale table (telegram_files) me check karega
-    cursor = Media.get_collection().database["telegram_files"].find(filter)
-    results = await cursor.to_list(length=1)
-    if results:
-        return results
+    # Aapka main working database uthana
+    db_name = os.getenv("DATABASE_NAME") or "MovieBotDB_New"
+    db = client[db_name]
+    
+    # 1. Sabse pehle scraper wale table (telegram_files) me check karega
+    try:
+        scraper_file = await db.telegram_files.find_one({"file_id": query})
+        if scraper_file:
+            # Agar list format me data return chahiye toh list bana kar bhejenge
+            return [scraper_file] if isinstance(scraper_file, dict) else scraper_file
+    except Exception as e:
+        logger.error(f"Scraper table check glitch: {e}")
 
-    # Agar scraper me nahi mila, toh purane tables (Media/Media2) me dhoondhega
+    # 2. Agar scraper me nahi mila, toh purane tables (Media/Media2) me dhoondhega
+    filter = {"file_id": query}
     tasks = [Media.find(filter).to_list(length=1)]
     if MULTIPLE_DB:
         tasks.append(Media2.find(filter).to_list(length=1))  
