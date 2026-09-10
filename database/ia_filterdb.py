@@ -259,6 +259,14 @@ async def get_bad_files(query, file_type=None):
 
 async def get_file_details(query):
     filter = {"file_id": query}
+    
+    # 🛠️ FIXED: Sabse pehle naye scraper wale table (telegram_files) me check karega
+    cursor = Media.get_collection().database["telegram_files"].find(filter)
+    results = await cursor.to_list(length=1)
+    if results:
+        return results
+
+    # Agar scraper me nahi mila, toh purane tables (Media/Media2) me dhoondhega
     tasks = [Media.find(filter).to_list(length=1)]
     if MULTIPLE_DB:
         tasks.append(Media2.find(filter).to_list(length=1))  
