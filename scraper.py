@@ -20,19 +20,14 @@ collection = db[COLLECTION_NAME]
 
 # 🔍 ओपन-सोर्स वीडियो इंडेक्स सर्वर से डायरेक्ट .mkv लिंक निकालने का नया फ़ंक्शन (100% NO TIME OUT)
 def find_mkv_link(title, is_series=False):
-    # सर्च इंजन को ब्लॉक करने के बजाय हम डायरेक्ट कस्टमाइज्ड मूवी सर्वर्स का वर्किंग स्ट्रीमिंग फॉर्मेट यूज़ करेंगे
-    # यह तरीका कभी टाइमआउट नहीं देगा क्योंकि यह सीधे एपीआई स्ट्रक्चर जनरेट करता है
     clean_title = title.replace(":", "").replace("-", " ").replace("  ", " ").strip()
     slug = clean_title.replace(" ", "-").lower()
     
-    # ग्लोबल इंडेक्स सर्वर्स के 3 सबसे बड़े वर्किंग स्ट्रीमिंग और डाउनलोड रास्तों का बैकअप
     links_backup = [
         f"https://netmirror.center{slug}",
         f"https://archive.org{slug}/{slug}.mkv",
         f"https://vidsrc.me{slug}"
     ]
-    
-    # पहली प्रायोरिटी वाला लिंक जो आपके बॉट में तुरंत चलेगा
     return links_backup[0]
 
 # 📥 डेटाबेस में डेटा सेव करने का फंक्शन
@@ -49,14 +44,26 @@ def save_to_db(clean_name, download_link, is_series=False):
     collection.insert_one(movie_data)
     logging.info(f"✅ Successfully Saved in Database: {clean_name}")
 
-# 🚀 1. सालों पुरानी and नई कंबाइंड वेब सीरीज़ लाने का फंक्शन
+# 🚀 1. सालों पुरानी and नई कंबाइंड वेब सीरीज़ लाने का फंक्शन (MAX 500 PAGES)
 def scrape_popular_web_series():
     logging.info("📺 Hollywood & Bollywood Web Series check ho rahi hain...")
-    for page in range(1, 31):
-        logging.info(f"📄 TMDB Web Series Page {page} process ho raha hai...")
-        
-        base_api = "https://" + "api." + "themoviedb" + ".org"
-        endpoint = "/3" + "/discover" + "/tv"
+    
+    base_api = "https://themoviedb.org"
+    endpoint = "/3/discover/tv"
+    
+    # Total pages pata karne ke liye pehli request
+    try:
+        init_url = f"{base_api}{endpoint}?api_key={TMDB_API_KEY}&page=1&with_original_language=hi|en"
+        init_res = requests.get(init_url, timeout=20).json()
+        # TMDB discover max 500 pages allow karta hai
+        total_pages = min(init_res.get("total_pages", 500), 500)
+        logging.info(f"📊 TMDB par total {total_pages} series pages mile. Scraping shuru...")
+    except Exception as e:
+        logging.error(f"🛑 Initial series page fetch failed: {e}")
+        total_pages = 500
+
+    for page in range(1, total_pages + 1):
+        logging.info(f"📄 TMDB Web Series Page {page}/{total_pages} process ho raha hai...")
         tmdb_url = f"{base_api}{endpoint}?api_key={TMDB_API_KEY}&page={page}&with_original_language=hi|en"
         
         try:
@@ -85,20 +92,32 @@ def scrape_popular_web_series():
                 
                 if download_link:
                     save_to_db(clean_name, download_link, is_series=True)
-                time.sleep(1) # अब ज़्यादा स्लीप की ज़रूरत नहीं क्योंकि ब्लॉक होने का रिस्क नहीं है
+                time.sleep(0.5) # Speed thodi optimize ki hai
                 
         except Exception as e:
             logging.error(f"❌ Series page {page} error: {e}")
             time.sleep(2)
 
-# 🚀 2. पुरानी and नई मूवीज लाने का कंबाइंड फंक्शन
+# 🚀 2. पुरानी and नई मूवीज लाने का कंबाइंड फंक्शन (MAX 500 PAGES)
 def scrape_movies():
     logging.info("🎬 Popular Movies check ho rahi hain...")
-    for page in range(1, 41):
-        logging.info(f"📄 TMDB Movies Page {page} process ho raha hai...")
-        
-        base_api = "https://" + "api." + "themoviedb" + ".org"
-        endpoint = "/3" + "/discover" + "/movie"
+    
+    base_api = "https://themoviedb.org"
+    endpoint = "/3/discover/movie"
+    
+    # Total pages pata karne ke liye pehli request
+    try:
+        init_url = f"{base_api}{endpoint}?api_key={TMDB_API_KEY}&page=1&with_original_language=hi|en"
+        init_res = requests.get(init_url, timeout=20).json()
+        # TMDB discover max 500 pages allow karta hai
+        total_pages = min(init_res.get("total_pages", 500), 500)
+        logging.info(f"📊 TMDB par total {total_pages} movie pages mile. Scraping shuru...")
+    except Exception as e:
+        logging.error(f"🛑 Initial movie page fetch failed: {e}")
+        total_pages = 500
+
+    for page in range(1, total_pages + 1):
+        logging.info(f"📄 TMDB Movies Page {page}/{total_pages} process ho raha hai...")
         tmdb_url = f"{base_api}{endpoint}?api_key={TMDB_API_KEY}&page={page}&with_original_language=hi|en"
         
         try:
@@ -127,7 +146,7 @@ def scrape_movies():
                 
                 if download_link:
                     save_to_db(clean_name, download_link, is_series=False)
-                time.sleep(1)
+                time.sleep(0.5)
         except Exception as e:
             logging.error(f"❌ Movie page {page} error: {e}")
             time.sleep(2)
@@ -138,5 +157,4 @@ if __name__ == "__main__":
         scrape_popular_web_series()
         logging.info("💤 Movies aur Series dono pure hue. Scraper 15 minute ke liye rest pe hai...")
         time.sleep(900)
-        
-                
+            
