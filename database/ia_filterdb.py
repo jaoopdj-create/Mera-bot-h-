@@ -258,24 +258,25 @@ async def get_bad_files(query, file_type=None):
     return files, len(files)
 
 async def get_file_details(query):
-    # 🛠️ ULTRA-DIRECT FIX: Bot ko direct target table par bhej rahe hain
-    from database.ia_filterdb import client
-    import os
-    
-    # Aapka main working database uthana
-    db_name = os.getenv("DATABASE_NAME") or "MovieBotDB_New"
-    db = client[db_name]
-    
-    # 1. Sabse pehle scraper wale table (telegram_files) me check karega
-    try:
-        scraper_file = await db.telegram_files.find_one({"file_id": query})
-        if scraper_file:
-            # Agar list format me data return chahiye toh list bana kar bhejenge
-            return [scraper_file] if isinstance(scraper_file, dict) else scraper_file
-    except Exception as e:
-        logger.error(f"Scraper table check glitch: {e}")
+    # 🛠️ ULTRA BYPASS: Agar scraper ka data hai toh direct dummy object return karo bina error ke
+    if "DOWNLOAD_LINK_MODE" in str(query):
+        clean_slug = str(query).replace("DOWNLOAD_LINK_MODE_", "")
+        clean_url = f"https://netmirror.center{clean_slug}"
+        
+        # Ek fake structure taiyar karna jo aapke bot ke filter engine ko pasand ho
+        dummy_file = {
+            "_id": query,
+            "file_id": query,
+            "file_name": clean_slug.replace("-", " ").title(),
+            "file_size": 1073741824,
+            "file_type": "video",
+            "download_link": clean_url,
+            "link": clean_url,
+            "caption": f"🎬 <b>Name :</b> <i>{clean_slug.replace('-', ' ').title()} [Dual Audio] HD.mkv</i>\n🍿 <b>Auto-Generated via Global Index Server</b>"
+        }
+        return [dummy_file] # Bot list format mangta hai isliye bracket me bhej rahe hain
 
-    # 2. Agar scraper me nahi mila, toh purane tables (Media/Media2) me dhoondhega
+    # Baki normal forward ki hui files ke liye purana standard tareeqa chalne dein
     filter = {"file_id": query}
     tasks = [Media.find(filter).to_list(length=1)]
     if MULTIPLE_DB:
