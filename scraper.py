@@ -39,6 +39,7 @@ def save_to_db(clean_name, download_link, title_only, is_series=False):
     collection.insert_one(movie_data)
     logging.info(f"✅ Successfully Saved: {title_only}")
 
+# 🛠️ Safe Params Fetcher WITH AUTO-RETRY SYSTEM
 def get_tmdb_data(url, query_params):
     for attempt in range(3):
         try:
@@ -50,11 +51,15 @@ def get_tmdb_data(url, query_params):
                     except ValueError:
                         logging.error("🛑 Response body was not a valid JSON string.")
             elif response.status_code == 429:
-                time.sleep(5)
+                logging.warning("⚠️ Rate limited by TMDB. Sleeping for 10 seconds...")
+                time.sleep(10)
                 continue
+            else:
+                logging.error(f"🛑 TMDB Error HTTP status: {response.status_code}")
         except Exception as e:
             logging.error(f"❌ Request error on attempt {attempt + 1}: {e}")
-        time.sleep(3)
+        
+        time.sleep(5) # Retry delay badha diya hai
     return None
 
 def scrape_all_web_series():
@@ -88,7 +93,7 @@ def scrape_all_web_series():
                     
                 download_link = find_mkv_link(title, is_series=True)
                 save_to_db(clean_name, download_link, title_only=title, is_series=True)
-            time.sleep(0.4)
+                time.sleep(1.5) # FIXED: Safe execution gap
 
 def scrape_all_movies():
     logging.info("🎬 Global Movies Extraction shuru ho rahi hai...")
@@ -121,7 +126,7 @@ def scrape_all_movies():
                     
                 download_link = find_mkv_link(title, is_series=False)
                 save_to_db(clean_name, download_link, title_only=title, is_series=False)
-            time.sleep(0.4)
+                time.sleep(1.5) # FIXED: Safe execution gap
 
 if __name__ == "__main__":
     while True:
@@ -129,4 +134,4 @@ if __name__ == "__main__":
         scrape_all_web_series()
         logging.info("💤 Global structural loop cycle complete! 15 min rest...")
         time.sleep(900)
-     
+        
