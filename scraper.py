@@ -44,89 +44,91 @@ def save_to_db(clean_name, download_link, is_series=False):
     collection.insert_one(movie_data)
     logging.info(f"✅ Successfully Saved in Database: {clean_name}")
 
-# 🚀 1. सालों पुरानी and नई कंबाइंड वेब सीरीज़ लाने का फंक्शन (MAX 500 PAGES)
+# 🛠️ Safe Response Fetcher (JSON Crash se bachne ke liye)
+def get_tmdb_data(url):
+    try:
+        response = requests.get(url, headers=HEADERS, timeout=20)
+        if response.status_code == 200:
+            # Check if response is actually JSON
+            if "application/json" in response.headers.get("Content-Type", ""):
+                return response.json()
+            else:
+                logging.error("🛑 TMDB response was not JSON formatted.")
+        else:
+            logging.error(f"🛑 TMDB HTTP Error Status: {response.status_code}")
+    except Exception as e:
+        logging.error(f"❌ Network/Request exception occurred: {e}")
+    return None
+
+# 🚀 1. सालों पुरानी and नई कंबाइंड वेब सीरीज़ लाने का फंक्शन
 def scrape_popular_web_series():
     logging.info("📺 Hollywood & Bollywood Web Series check ho rahi hain...")
     
-    base_api = "https://themoviedb.org"
+    base_api = "https://api.themoviedb.org"
     endpoint = "/3/discover/tv"
     
-    # Total pages pata karne ke liye pehli request
-    try:
-        init_url = f"{base_api}{endpoint}?api_key={TMDB_API_KEY}&page=1&with_original_language=hi|en"
-        init_res = requests.get(init_url, timeout=20).json()
-        # TMDB discover max 500 pages allow karta hai
-        total_pages = min(init_res.get("total_pages", 500), 500)
-        logging.info(f"📊 TMDB par total {total_pages} series pages mile. Scraping shuru...")
-    except Exception as e:
-        logging.error(f"🛑 Initial series page fetch failed: {e}")
-        total_pages = 500
+    # URL parameters safely pass karne ke liye dict use kiya hai (No Column/Pipe Error)
+    init_url = f"{base_api}{endpoint}?api_key={TMDB_API_KEY}&page=1&with_original_language=hi"
+    init_res = get_tmdb_data(init_url)
+    
+    # TMDB standard discover limits up to 500 pages
+    total_pages = min(init_res.get("total_pages", 500), 500) if init_res else 500
+    logging.info(f"📊 TMDB par total {total_pages} series pages target ho rahe hain...")
 
     for page in range(1, total_pages + 1):
         logging.info(f"📄 TMDB Web Series Page {page}/{total_pages} process ho raha hai...")
-        tmdb_url = f"{base_api}{endpoint}?api_key={TMDB_API_KEY}&page={page}&with_original_language=hi|en"
+        tmdb_url = f"{base_api}{endpoint}?api_key={TMDB_API_KEY}&page={page}&with_original_language=hi"
         
-        try:
-            response = requests.get(tmdb_url, timeout=20)
-            if response.status_code != 200: 
-                logging.error(f"🛑 TMDB responded with status: {response.status_code}")
-                break
-                
-            series_results = response.json().get('results', [])
-            if not series_results:
-                break
-                
-            for series in series_results:
-                title = series.get('name')
-                if not title: continue
-                
-                first_air_date = series.get('first_air_date', '')
-                year = first_air_date.split('-')[0] if first_air_date else ""
-                clean_name = f"{title} ({year})" if year else title
-                
-                if collection.find_one({"file_name": {"$regex": title, "$options": "i"}}):
-                    continue
-                    
-                logging.info(f"🔍 Web Series Found: {clean_name}. Generating Pack link...")
-                download_link = find_mkv_link(title, is_series=True)
-                
-                if download_link:
-                    save_to_db(clean_name, download_link, is_series=True)
-                time.sleep(0.5) # Speed thodi optimize ki hai
-                
-        except Exception as e:
-            logging.error(f"❌ Series page {page} error: {e}")
+        data = get_tmdb_data(tmdb_url)
+        if not data:
             time.sleep(2)
+            continue
+            
+        series_results = data.get('results', [])
+        if not series_results:
+            break
+            
+        for series in series_results:
+            title = series.get('name')
+            if not title: continue
+            
+            first_air_date = series.get('first_air_date', '')
+            year = first_air_date.split('-')[0] if first_air_date else ""
+            clean_name = f"{title} ({year})" if year else title
+            
+            if collection.find_one({"file_name": {"$regex": title, "$options": "i"}}):
+                continue
+                
+            logging.info(f"🔍 Web Series Found: {clean_name}. Generating Pack link...")
+            download_link = find_mkv_link(title, is_series=True)
+            
+            if download_link:
+                save_to_db(clean_name, download_link, is_series=True)
+            time.sleep(0.5)
 
-# 🚀 2. पुरानी and नई मूवीज लाने का कंबाइंड फंक्शन (MAX 500 PAGES)
+# 🚀 2. पुरानी and नई मूवीज लाने का कंबाइंड फंक्शन
 def scrape_movies():
     logging.info("🎬 Popular Movies check ho rahi hain...")
     
-    base_api = "https://themoviedb.org"
+    base_api = "https://api.themoviedb.org"
     endpoint = "/3/discover/movie"
     
-    # Total pages pata karne ke liye pehli request
-    try:
-        init_url = f"{base_api}{endpoint}?api_key={TMDB_API_KEY}&page=1&with_original_language=hi|en"
-        init_res = requests.get(init_url, timeout=20).json()
-        # TMDB discover max 500 pages allow karta hai
-        total_pages = min(init_res.get("total_pages", 500), 500)
-        logging.info(f"📊 TMDB par total {total_pages} movie pages mile. Scraping shuru...")
-    except Exception as e:
-        logging.error(f"🛑 Initial movie page fetch failed: {e}")
-        total_pages = 500
+    init_url = f"{base_api}{endpoint}?api_key={TMDB_API_KEY}&page=1&with_original_language=hi"
+    init_res = get_tmdb_data(init_url)
+    
+    total_pages = min(init_res.get("total_pages", 500), 500) if init_res else 500
+    logging.info(f"📊 TMDB par total {total_pages} movie pages target ho rahe hain...")
 
     for page in range(1, total_pages + 1):
         logging.info(f"📄 TMDB Movies Page {page}/{total_pages} process ho raha hai...")
-        tmdb_url = f"{base_api}{endpoint}?api_key={TMDB_API_KEY}&page={page}&with_original_language=hi|en"
+        tmdb_url = f"{base_api}{endpoint}?api_key={TMDB_API_KEY}&page={page}&with_original_language=hi"
         
-        try:
-            response = requests.get(tmdb_url, timeout=20)
-            if response.status_code != 200: 
-                logging.error(f"🛑 TMDB responded with status: {response.status_code}")
-                break
-                
-            movie_results = response.json().get('results', [])
+        data = get_tmdb_data(tmdb_url)
+        if not data:
+            time.sleep(2)
+            continue
+            
+            movie_results = data.get('results', [])
             if not movie_results:
                 break
                 
@@ -147,9 +149,6 @@ def scrape_movies():
                 if download_link:
                     save_to_db(clean_name, download_link, is_series=False)
                 time.sleep(0.5)
-        except Exception as e:
-            logging.error(f"❌ Movie page {page} error: {e}")
-            time.sleep(2)
 
 if __name__ == "__main__":
     while True:
@@ -157,4 +156,4 @@ if __name__ == "__main__":
         scrape_popular_web_series()
         logging.info("💤 Movies aur Series dono pure hue. Scraper 15 minute ke liye rest pe hai...")
         time.sleep(900)
-            
+    
