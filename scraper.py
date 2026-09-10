@@ -40,7 +40,7 @@ def clean_accent_characters(text):
 def find_mkv_link(title, is_series=False):
     clean_title = title.replace(":", "").replace("-", " ").replace("  ", " ").strip()
     slug = clean_title.replace(" ", "-").lower()
-    return f"https://netmirror.center{slug}"
+    return f"https://netmirror.center/{slug}"
 
 def save_to_db(clean_name, download_link, title_only, is_series=False):
     tag = "[Web Series]" if is_series else "[Dual Audio] HD"
