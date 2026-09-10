@@ -1,4 +1,4 @@
- import os
+import os
 import time
 import requests
 from pymongo import MongoClient
@@ -7,7 +7,7 @@ from datetime import datetime
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
-# MongoDB एनवायरनमेंट वेरिएबल्स (MovieBotDB_New Configured)
+# MongoDB configuration setup (MovieBotDB_New optimized)
 MONGO_URI = os.getenv("MONGO_URI") or os.getenv("DATABASE_URI") or "YOUR_MONGODB_URI_HERE"
 DB_NAME = "MovieBotDB_New"          
 COLLECTION_NAME = "telegram_files"  
@@ -39,29 +39,21 @@ def save_to_db(clean_name, download_link, title_only, is_series=False):
     collection.insert_one(movie_data)
     logging.info(f"✅ Successfully Saved: {title_only}")
 
-# 🛠️ Safe Params Fetcher WITH AUTO-RETRY SYSTEM (JSON Decoder Crash Fix)
 def get_tmdb_data(url, query_params):
-    # Retry management loop jab tak clean server data response na mil jaye
     for attempt in range(3):
         try:
             response = requests.get(url, headers=HEADERS, params=query_params, timeout=20)
             if response.status_code == 200:
-                # Stripped data validation check
                 if response.text and response.text.strip():
                     try:
                         return response.json()
                     except ValueError:
-                        logging.error("🛑 Response body was not a valid JSON formatting string.")
+                        logging.error("🛑 Response body was not a valid JSON string.")
             elif response.status_code == 429:
-                logging.warning("⚠️ Rate limited by TMDB. Sleeping for 5 seconds...")
                 time.sleep(5)
                 continue
-            else:
-                logging.error(f"🛑 TMDB Error HTTP status: {response.status_code}")
         except Exception as e:
-            logging.error(f"❌ Network request exception on attempt {attempt + 1}: {e}")
-        
-        # Attack protection delay
+            logging.error(f"❌ Request error on attempt {attempt + 1}: {e}")
         time.sleep(3)
     return None
 
@@ -100,7 +92,7 @@ def scrape_all_web_series():
 
 def scrape_all_movies():
     logging.info("🎬 Global Movies Extraction shuru ho rahi hai...")
-    base_url = "https://api.themoviedb.org/3/discover/movie"
+    base_url = "https://themoviedb.org"
     
     current_year = datetime.now().year
     for year in range(1970, current_year + 1):
@@ -125,7 +117,6 @@ def scrape_all_movies():
                 
                 clean_name = f"{title} ({year})"
                 if collection.find_one({"file_name": title.strip()}): 
-                    
                     continue
                     
                 download_link = find_mkv_link(title, is_series=False)
@@ -138,4 +129,4 @@ if __name__ == "__main__":
         scrape_all_web_series()
         logging.info("💤 Global structural loop cycle complete! 15 min rest...")
         time.sleep(900)
-        
+     
