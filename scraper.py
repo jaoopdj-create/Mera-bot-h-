@@ -19,27 +19,30 @@ client = MongoClient(MONGO_URI)
 db = client[DB_NAME]
 collection = db[COLLECTION_NAME]
 
-# 🔍 डायरेक्ट स्ट्रीमिंग लिंक जनरेटर
+# 🔍 डायरेक्ट स्ट्रीमिंग/डाउनलोड लिंक जनरेटर
 def find_mkv_link(title, is_series=False):
     clean_title = title.replace(":", "").replace("-", " ").replace("  ", " ").strip()
     slug = clean_title.replace(" ", "-").lower()
     return f"https://netmirror.center{slug}"
 
-# 📥 डेटाबेस में डेटा सेव करने का फंक्शन
+# 📥 डेटाबेस में डेटा सेव करने का फिक्स फंक्शन (ALL BOT BUTTON STRUCTURE ADDED)
 def save_to_db(clean_name, download_link, title_only, is_series=False):
     tag = "[Web Series]" if is_series else "[Dual Audio] HD"
     
+    # Auto-filter bots crash na hon isliye proper mapping key format
     movie_data = {
-        "file_name": title_only.strip(),  # Bot search clear system matching
-        "file_id": download_link,        # Direct functional netmirror URL
-        "file_size": 1073741824,          # 1 GB standard dummy size
+        "file_name": title_only.strip(),               # Bot exact matching ke liye clean name
+        "file_id": f"BAAMAgAD{int(time.time())}x90",   # Dummy unique Telegram File ID structural format
+        "file_size": 1073741824,                       # 1 GB standard dummy size
         "file_type": "video",
-        "caption": f"🎬 <b>Name :</b> <i>{clean_name} {tag}.mkv</i>\n🍿 <b>Auto-Generated via Global Index Server</b>",
+        "download_link": download_link,                # Custom web streaming fallback link
+        "link": download_link,                         # Secondary dynamic button mapping key
+        "caption": f"🎬 <b>Name :</b> <i>{clean_name} {tag}.mkv</i>\n🍿 <b>Auto-Generated via Global Index Server</b>\n\n📥 <b>Direct Link:</b> {download_link}",
         "timestamp": time.time()
     }
     
     collection.insert_one(movie_data)
-    logging.info(f"✅ Successfully Saved: {title_only}")
+    logging.info(f"✅ Successfully Saved with Bot-Button Structure: {title_only}")
 
 # 🛠️ Safe Response Fetcher (404 and Format Handling Fix)
 def get_tmdb_data(url):
@@ -49,7 +52,6 @@ def get_tmdb_data(url):
             if "application/json" in response.headers.get("Content-Type", ""):
                 return response.json()
         elif response.status_code == 404:
-            # 404 ko break karne ke bajaye skip mode me logs handle karega
             logging.warning(f"⚠️ Endpoint not found (404) for this filter. Skipping gracefully...")
         else:
             logging.error(f"🛑 TMDB Error HTTP status: {response.status_code}")
@@ -59,17 +61,15 @@ def get_tmdb_data(url):
 
 # 🚀 1. Year-by-Year Unlimited Global Web Series Scraper
 def scrape_all_web_series():
-    logging.info("📺 Global Web Series Year-by-Year extraction shuru...")
-    base_api = "https://api.themoviedb.org"
+    logging.info("📺 Global Web Series Extraction shuru ho rahi hai...")
+    base_api = "https://themoviedb.org"
     endpoint = "/3/discover/tv"
     
     current_year = datetime.now().year
-    # 1970 se lekar current saal tak sabhi blocks fetch honge
     for year in range(1970, current_year + 1):
         init_url = f"{base_api}{endpoint}?api_key={TMDB_API_KEY}&page=1&first_air_date_year={year}"
         init_res = get_tmdb_data(init_url)
         
-        # 404 fail check protection fix
         if not init_res or 'total_pages' not in init_res:
             continue
             
@@ -89,7 +89,7 @@ def scrape_all_web_series():
                 
                 clean_name = f"{title} ({year})"
                 
-                # Simple exact collection matching bypass check
+                # Check duplication using clean title
                 if collection.find_one({"file_name": title.strip()}):
                     continue
                     
@@ -99,8 +99,8 @@ def scrape_all_web_series():
 
 # 🚀 2. Year-by-Year Unlimited Global Movies Scraper
 def scrape_all_movies():
-    logging.info("🎬 Global Movies Year-by-Year extraction shuru...")
-    base_api = "https://api.themoviedb.org"
+    logging.info("🎬 Global Movies Extraction shuru ho rahi hai...")
+    base_api = "https://themoviedb.org"
     endpoint = "/3/discover/movie"
     
     current_year = datetime.now().year
@@ -108,7 +108,6 @@ def scrape_all_movies():
         init_url = f"{base_api}{endpoint}?api_key={TMDB_API_KEY}&page=1&primary_release_year={year}"
         init_res = get_tmdb_data(init_url)
         
-        # 404 fail check protection fix
         if not init_res or 'total_pages' not in init_res:
             continue
             
@@ -141,4 +140,4 @@ if __name__ == "__main__":
         scrape_all_web_series()
         logging.info("💤 Global structural loop cycle complete! 15 min rest...")
         time.sleep(900)
-                
+    
