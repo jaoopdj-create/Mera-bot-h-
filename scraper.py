@@ -53,10 +53,11 @@ def get_tmdb_data(url):
     for attempt in range(4):
         try:
             response = requests.get(url, headers=HEADERS, timeout=20)
-            if response.status_code == 200:
+            status = response.status_code
+            if status == 200:
                 if response.text and not response.text.strip().startswith("<!DOCTYPE html>"):
                     return response.json()
-            elif response.status_code in:
+            elif status == 429 or status == 503: # 🛠️ CRITICAL FIX: Line 59-60 perfectly secured
                 logging.warning(f"⚠️ TMDB Rate Limit! Sleeping for 20s...")
                 time.sleep(20)
                 continue
@@ -113,4 +114,4 @@ if __name__ == "__main__":
         scrape_all_web_series()
         logging.info("💤 Loop complete. 15 minute rest...")
         time.sleep(900)
-                
+        
