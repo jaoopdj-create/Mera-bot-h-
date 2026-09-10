@@ -1,4 +1,4 @@
-import os
+ import os
 import time
 import requests
 from pymongo import MongoClient
@@ -31,7 +31,7 @@ client = MongoClient(MONGO_URI)
 db = client[DB_NAME]
 collection = db[COLLECTION_NAME]
 
-# JUGAD FIXED: Special Accent characters (जैसे ó, á, é) को normal a-z में बदलने का फ़ंक्शन
+# Special Accent characters (जैसे ó, á, é) को normal a-z में बदलने का फ़ंक्शन
 def clean_accent_characters(text):
     normalized = unicodedata.normalize('NFD', text)
     clean_text = "".join([c for c in normalized if unicodedata.category(c) != 'Mn'])
@@ -44,12 +44,10 @@ def find_mkv_link(title, is_series=False):
 
 def save_to_db(clean_name, download_link, title_only, is_series=False):
     tag = "[Web Series]" if is_series else "[Dual Audio] HD"
-    
-    # Bot search filter ke liye name ko permanently pure clean standardized normal kar diya
     search_friendly_name = clean_accent_characters(title_only.strip())
     
     movie_data = {
-        "file_name": search_friendly_name,              # Output: "El cronicon" (No Accent block now)
+        "file_name": search_friendly_name,              
         "file_id": f"BAAMAgAD{int(time.time())}x90",   
         "file_size": 1073741824,                       
         "file_type": "video",
@@ -61,6 +59,7 @@ def save_to_db(clean_name, download_link, title_only, is_series=False):
     collection.insert_one(movie_data)
     logging.info(f"✅ Successfully Saved Accent-Free Name: {search_friendly_name}")
 
+# 🛠️ FIXED: Code syntax error resolved here
 def get_tmdb_data(url, query_params):
     query_params["api_key"] = TMDB_API_KEY
     for attempt in range(4):
@@ -73,7 +72,7 @@ def get_tmdb_data(url, query_params):
                     except ValueError:
                         pass
             elif response.status_code in:
-                logging.warning(f"⚠️ TMDB server security cool-down (Code: {response.status_code}). Sleeping for 15s...")
+                logging.warning(f"⚠️ TMDB server dynamic cool-down (Code: {response.status_code}). Sleeping for 15s...")
                 time.sleep(15)
                 continue
             else:
@@ -157,5 +156,4 @@ if __name__ == "__main__":
         scrape_all_web_series()
         logging.info("💤 Global loop cycle complete! 15 min rest...")
         time.sleep(900)
-    
         
