@@ -13,6 +13,10 @@ from info import *
 
 routes = web.RouteTableDef()
 
+# 🔽 ISS NYI LINE KO THREK NEECHE ADD KAR DEIN:
+class_cache = {}
+
+
 @routes.get("/favicon.ico")
 async def favicon_route_handler(request):
     return web.FileResponse('web/favicon.ico')
@@ -44,44 +48,62 @@ async def watch_handler(request: web.Request):
         stream_url = f"https://{request.host}/{path}"
         if secure_hash:
             stream_url += f"?hash={secure_hash}"
-
-        # प्लेयर का खूबसूरत और आधुनिक इंटरफ़ेस (Plyr Player)
+       
         html_content = f"""
         <!DOCTYPE html>
         <html lang="en">
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Movies4U Web Player</title>
-            <!-- आधुनिक प्लेयर लुक देने के लिए Plyr CSS -->
-            <link href="https://jsdelivr.net" rel="stylesheet">
+            <title>SilentXBotz | Premium Stream</title>
             <style>
-                body {{ margin: 0; background-color: #05050a; display: flex; justify-content: center; align-items: center; height: 100vh; font-family: sans-serif; }}
-                .player-container {{ width: 100%; max-width: 850px; padding: 15px; box-sizing: border-box; text-align: center; }}
-                .logo {{ color: #fff; margin-bottom: 15px; font-weight: bold; letter-spacing: 1px; font-size: 18px; }}
+                body {{ background-color: #0b0114; color: #ffffff; font-family: 'Segoe UI', Arial, sans-serif; text-align: center; padding: 15px; margin: 0; }}
+                .container {{ max-width: 500px; margin: 20px auto; background: #140529; padding: 20px; border-radius: 16px; border: 1px solid #251145; box-shadow: 0 10px 30px rgba(0,0,0,0.7); }}
+                h2 {{ color: #b67dff; font-size: 19px; font-weight: 600; margin-bottom: 25px; letter-spacing: 0.5px; }}
+                .video-wrapper {{ position: relative; width: 100%; border-radius: 12px; overflow: hidden; background: #000000; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.6); }}
+                video {{ width: 100%; display: block; outline: none; }}
+                .meta-box {{ background: #1f0b3b; padding: 18px; border-radius: 12px; text-align: left; border: 1px solid #2c1452; }}
+                .tag {{ background: #822eff; color: white; display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: bold; margin-bottom: 14px; text-transform: uppercase; letter-spacing: 0.5px; }}
+                .title-text {{ font-size: 15px; font-weight: 500; line-height: 1.5; margin-bottom: 20px; color: #ecd9ff; word-wrap: break-word; }}
+                .btn-group {{ display: flex; gap: 8px; margin-bottom: 14px; }}
+                .btn {{ padding: 11px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-size: 13.5px; transition: background 0.2s; }}
+                .btn-download {{ background: #270e47; color: #d6b3ff; flex: 1.1; border: 1px solid #431f73; text-align: center; }}
+                .btn-copy {{ background: #270e47; color: #d6b3ff; flex: 1.2; border: 1px solid #431f73; }}
+                .btn-share {{ background: #270e47; color: #d6b3ff; flex: 1; border: 1px solid #431f73; }}
+                .btn-external {{ background: linear-gradient(90deg, #7b31f5, #9c5cff); color: white; width: 100%; box-sizing: border-box; font-size: 14px; padding: 13px; margin-top: 5px; box-shadow: 0 4px 12px rgba(123, 49, 245, 0.3); }}
+                .audio-warning {{ font-size: 12px; color: #cca3ff; margin-top: 15px; text-align: center; font-style: italic; opacity: 0.85; }}
             </style>
         </head>
         <body>
+            <div class="container">
+                <h2>Enjoy Premium Streaming Experience</h2>
+                
+                <div class="video-wrapper">
+                    <video controls poster="https://ibb.co" preload="none">
+                        <source src="{download_url}" type="video/mp4">
+                        Your browser does not support HTML video play paths.
+                    </video>
+                </div>
 
-        <div class="player-container">
-            <div class="logo">🍿 MOVIES4U WEB PLAYER</div>
-            <!-- वीडियो प्लेयर टैग -->
-            <video id="player" playsinline controls autocomplete="off">
-                <source src="{stream_url}" type="video/mp4">
-            </video>
-        </div>
-
-        <script src="https://jsdelivr.net"></script>
-        <script>
-            // प्लेयर को लोड और एक्टिवेट करना
-            const player = new Plyr('#player', {{
-                controls: ['play-large', 'play', 'progress', 'current-time', 'duration', 'mute', 'volume', 'settings', 'pip', 'fullscreen'],
-                ratio: '16:9'
-            }});
-        </script>
+                <div class="meta-box">
+                    <div class="tag">▶️ HD STREAMING</div>
+                    <div class="title-text">{display_name}</div>
+                    
+                    <div class="btn-group">
+                        <a href="{download_url}" class="btn btn-download">📥 Download</a>
+                        <button onclick="navigator.clipboard.writeText(window.location.href); alert('Streaming link copied to clipboard!');" class="btn btn-copy">📋 Copy Link</button>
+                        <button onclick="window.open('https://telegram.me' + encodeURIComponent(window.location.href));" class="btn btn-share">🤝 Share</button>
+                    </div>
+                    
+                    <a href="intent://{download_url.replace('http://', '').replace('https://', '')}#Intent;package=com.mxtech.videoplayer.ad;S.title={display_name};end" class="btn btn-external">🚀 Open in External Player</a>
+                    
+                    <div class="audio-warning">⚠️ Browser Does Not Support EAC3 Audio. If No Sound, Please Use External Players.</div>
+                </div>
+            </div>
         </body>
         </html>
         """
+        
         return web.Response(text=html_content, content_type='text/html')
         
     except InvalidHash as e:
