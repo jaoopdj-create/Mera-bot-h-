@@ -1839,12 +1839,11 @@ async def send_file_handler(bot, query: CallbackQuery):
         s_btn = await stream_buttons(query.from_user.id, file_info.file_id)
         
         is_auto_del = AUTO_DELETE 
-        del_time = DELETE_TIME  
+        del_time = DELETE_TIME  # Default: 300 seconds (5 min)
         
         caption_text = f"<b>📂 ғɪʟᴇ ɴᴀᴍᴇ:</b> <code>{file_info.file_name}</code>\n\n<b>⚖️ ғɪʟᴇ sɪᴢᴇ:</b> {get_size(file_info.file_size)}"
-        if is_auto_del:
-            caption_text += f"\n\n⚠️ <i>Yeh file aur iske links strict {int(del_time/60)} minute mein auto-delete ho jayenge! Please forward ya save kar lein.</i>"
 
+        # 1. Sabse pehle main video file send karein
         sent_message = await bot.send_cached_media(
             chat_id=query.from_user.id,
             file_id=file_info.file_id,
@@ -1852,15 +1851,35 @@ async def send_file_handler(bot, query: CallbackQuery):
             reply_markup=InlineKeyboardMarkup(s_btn)
         )
         
+        # 2. Agar AUTO_DELETE enabled hai toh timer notification text send karein
         if is_auto_del:
-            async def auto_delete_task(msg, wait_seconds):
-                await asyncio.sleep(wait_seconds)
+            # Screenshot jaisa exact automatic text alert message
+            alert_message = await bot.send_message(
+                chat_id=query.from_user.id,
+                text=f"♻️ <b>THIS FILE WILL AUTO DELETE AFTER {int(del_time/60)} MINUTE</b>",
+                reply_to_message_id=sent_message.id # Isse reply format me jud jayega
+            )
+
+            # 3. Background process countdown handler
+            async def auto_delete_task(msg, alert_msg, wait_seconds):
+                await asyncio.sleep(wait_seconds) # 5 minute wait karega
+                
+                # Pahle main video file ko delete karein
                 try:
                     await msg.delete() 
                 except Exception:
                     pass
+                
+                # Phir niche wale alert message ko badal kar "Successfully Deleted" ka text daal dein
+                try:
+                    await alert_msg.edit_text(
+                        text="<b>YOUR VIDEO / FILE IS SUCCESSFULLY DELETED !!</b>"
+                    )
+                except Exception:
+                    pass
 
-            asyncio.create_task(auto_delete_task(sent_message, del_time))
+            # Background process me forward karna taaki bot crash na ho
+            asyncio.create_task(auto_delete_task(sent_message, alert_message, del_time))
 
     except UserIsBlocked:
         await query.answer("❌ ᴘʟᴇᴀsᴇ sᴛᴀʀᴛ ᴛʜᴇ ʙᴏᴛ ɪɴ ᴘʀɪᴠᴀᴛᴇ ғɪʀsᴛ!", show_alert=True)
