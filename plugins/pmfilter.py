@@ -1840,7 +1840,7 @@ async def send_file_handler(bot, query: CallbackQuery):
         from utils import get_size
         
         # 🚀 EXACT HARDCODED ACTIVE ROUTING PATH FOR BUTTON
-        stream_link = f"https://onrender.com{db_id}"
+        stream_link = f"https://mera-bot-h.onrender.com/watch/{db_id}"
         
         # SCREENSHOT INTERFACE ACCORDING INLINE BUTTON SETUP
         premium_buttons = [
