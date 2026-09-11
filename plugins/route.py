@@ -465,7 +465,7 @@ async def stream_handler(request: web.Request):
         )
 
 
-        headers = {{
+        headers = {
             "Content-Type": mime_type,
             "Content-Length": str(req_length),
             "Accept-Ranges": "bytes",
