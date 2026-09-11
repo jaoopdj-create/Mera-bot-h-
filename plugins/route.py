@@ -43,12 +43,26 @@ async def watch_handler(request: web.Request):
             if id_match:
                 id = int(id_match.group(1))
             secure_hash = request.rel_url.query.get("hash", "")
+        # 🚀 RE-INDEXING SE DYNAMIC FILM KA NAAM NIKALNA (ZERO-LOAD ENG)
+        index = min(work_loads, key=work_loads.get)
+        faster_client = multi_clients[index]
+        if faster_client in class_cache:
+            tg_connect = class_cache[faster_client]
+        else:
+            tg_connect = ByteStreamer(faster_client)
+            class_cache[faster_client] = tg_connect
+            
+        try:
+            file_id = await tg_connect.get_file_properties(id)
+            display_name = file_id.file_name
+        except Exception:
+            display_name = path.split("/")[-1].replace("_", " ").replace("-", " ")
 
-        # यहाँ हम सीधे आपके स्ट्रीमर का असली स्ट्रीमिंग यूआरएल जनरेट कर रहे हैं
-        stream_url = f"https://{request.host}/{path}"
+        protocol = "https" if request.secure else "http"
+        download_url = f"{protocol}://{request.host}/{path}"
         if secure_hash:
-            stream_url += f"?hash={secure_hash}"
-       
+            download_url += f"?hash={secure_hash}"
+            
         html_content = f"""
         <!DOCTYPE html>
         <html lang="en">
