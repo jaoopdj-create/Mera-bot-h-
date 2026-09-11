@@ -5,37 +5,25 @@ import logging
 import secrets
 import mimetypes
 from aiohttp import web
-from aiohttp.http_exceptions import BadStatusLine
+from pyrogram import Client
 from web import multi_clients, work_loads
 from web.exceptions import FIleNotFound, InvalidHash
 from web.custom_dl import ByteStreamer
 from info import *
 
 routes = web.RouteTableDef()
-
-# Global memory cluster dictionary defined to store object references
 class_cache = {}
 
-@routes.get("/favicon.ico")
-async def favicon_route_handler(request):
-    return web.FileResponse('web/favicon.ico')
-
-# 🏡 मुख्य होम पेज
-@routes.get("/", allow_head=True)
-async def root_route_handler(request):
-    return web.json_response("TechifyBots Web Server is Running Perfectly!")
-
-# 🍿 EXACT SILENTXBOTZ PREMIUM DUAL-AUDIO VIDEO PLAYER (100% FIXED)
+# 🍿 UNIVERSAL PLUGINS ROUTE (100% NOT FOUND FIX)
 @routes.get(r"/watch/{path:\S+}", allow_head=True)
 async def watch_handler(request: web.Request):
     try:
         path = request.match_info["path"]
-        secure_hash = ""
-        
-        # 📌 NOT FOUND BYPASS FIX: Alphanumeric String Tokens ko split karke extract karna
-        clean_id = path.split("/")[0] if "/" in path else path
         secure_hash = request.rel_url.query.get("hash", "")
-
+        
+        # Pure string token extraction loop bina bracket errors ke
+        clean_id = path.split("/") if "/" in path else path
+        
         index = min(work_loads, key=work_loads.get)
         faster_client = multi_clients[index]
         
@@ -47,9 +35,9 @@ async def watch_handler(request: web.Request):
             class_cache[faster_client] = tg_connect
             
         try:
-            # File properties context se asli naam nikalna
-            file_id = await tg_connect.get_file_properties(clean_id)
-            display_name = file_id.file_name
+            from database.ia_filterdb import get_file_details
+            file_info = await get_file_details(clean_id)
+            display_name = file_info.file_name if file_info else "Premium Video Asset"
         except Exception:
             display_name = path.split("/")[-1].replace("_", " ").replace("-", " ").replace(".mkv", "").title()
 
@@ -58,7 +46,7 @@ async def watch_handler(request: web.Request):
         if secure_hash:
             download_url += f"?hash={secure_hash}"
 
-        # 🎨 EXACT SCREENSHOT WALA SILENTXBOTZ PURPLE INTERFACE DESIGN LAYOUT
+        # EXACT SCREENSHOT PURPLE PREMIUM THEME HTML MODEL
         html_content = f"""
         <!DOCTYPE html>
         <html lang="en">
@@ -108,16 +96,14 @@ async def watch_handler(request: web.Request):
         </html>
         """
         return web.Response(text=html_content, content_type='text/html')
-    except (AttributeError, BadStatusLine, ConnectionResetError):
-        pass
     except Exception as e:
         raise web.HTTPInternalServerError(text=str(e))
-        # 📥 बैकएंड MEDIA STREAMER ENGINE
+
 @routes.get(r"/{path:\S+}", allow_head=True)
 async def stream_handler(request: web.Request):
     try:
         path = request.match_info["path"]
-        clean_id = path.split("/")[0] if "/" in path else path
+        clean_id = path.split("/") if "/" in path else path
         secure_hash = request.rel_url.query.get("hash", "")
         
         range_header = request.headers.get("Range", 0)
@@ -164,9 +150,6 @@ async def stream_handler(request: web.Request):
                 "Content-Disposition": f'inline; filename="{file_name}"',
                 "Accept-Ranges": "bytes",
                 "Access-Control-Allow-Origin": "*",
-                "Access-Control-Allow-Methods": "GET, HEAD, OPTIONS",
-                "Access-Control-Allow-Headers": "Range, Content-Type",
-                "Access-Control-Expose-Headers": "Content-Length, Content-Range, Accept-Ranges",
             },
         )
     except Exception as e:
