@@ -1843,8 +1843,8 @@ async def send_file_handler(bot, query: CallbackQuery):
         clean_title = re.sub(r"-+", "-", clean_title).strip("-")
         
         # Secure token calculation wrapper mapping paths
-        # Yahan hum path me id format feed kar rahe hain jo routes.py dhoondh raha h
-        stream_link = f"{URL}watch/{target_token}/{clean_title}"
+                # URL configs ko bypass karke direct aapka sahi and active Render domain link lagaya h
+        stream_link = f"https://onrender.com{db_id}"
         
         # SCREENSHOT INTERFACE BUTTON KEYBOARDS STRUCTURE
         premium_interface_buttons = [
