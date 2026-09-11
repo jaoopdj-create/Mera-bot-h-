@@ -360,6 +360,7 @@ function () {{
 
 
 # Media streaming route
+# Media streaming route
 @routes.get(r"/{path:\S+}", allow_head=True)
 async def stream_handler(request: web.Request):
 
@@ -368,18 +369,23 @@ async def stream_handler(request: web.Request):
         path = request.match_info["path"]
         clean_id = path.split("/")[-1]
 
+        try:
+            message_id = int(clean_id)
+        except ValueError:
+            raise web.HTTPBadRequest(
+                text="Invalid file ID"
+            )
+
         tg_connect, index = await get_streamer()
 
         file_id = await tg_connect.get_file_properties(
-            clean_id
+            message_id
         )
 
         file_size = file_id.file_size
-
         range_header = request.headers.get("Range")
 
         if range_header:
-
             byte_range = (
                 range_header
                 .replace("bytes=", "")
@@ -389,43 +395,32 @@ async def stream_handler(request: web.Request):
             from_bytes = int(byte_range[0])
 
             if len(byte_range) > 1 and byte_range[1]:
-
                 until_bytes = int(byte_range[1])
-
             else:
-
                 until_bytes = file_size - 1
-
         else:
-
             from_bytes = 0
             until_bytes = file_size - 1
-
 
         until_bytes = min(
             until_bytes,
             file_size - 1
         )
 
-
         chunk_size = 1024 * 1024
-
 
         offset = (
             from_bytes
             - (from_bytes % chunk_size)
         )
 
-
         first_part_cut = (
             from_bytes - offset
         )
 
-
         last_part_cut = (
             until_bytes % chunk_size
         ) + 1
-
 
         req_length = (
             until_bytes
@@ -433,14 +428,12 @@ async def stream_handler(request: web.Request):
             + 1
         )
 
-
         part_count = math.ceil(
             (until_bytes + 1)
             / chunk_size
         ) - math.floor(
             offset / chunk_size
         )
-
 
         body = tg_connect.yield_file(
             file_id,
@@ -452,18 +445,15 @@ async def stream_handler(request: web.Request):
             chunk_size
         )
 
-
         mime_type = (
             file_id.mime_type
             or "application/octet-stream"
         )
 
-
         file_name = (
             file_id.file_name
             or "video"
         )
-
 
         headers = {
             "Content-Type": mime_type,
@@ -474,9 +464,7 @@ async def stream_handler(request: web.Request):
                 f'inline; filename="{file_name}"'
         }
 
-
         if range_header:
-
             headers["Content-Range"] = (
                 f"bytes {from_bytes}-"
                 f"{until_bytes}/{file_size}"
@@ -496,9 +484,7 @@ async def stream_handler(request: web.Request):
 
         return response
 
-
     except Exception as e:
-
         raise web.HTTPInternalServerError(
             text=str(e)
 )
