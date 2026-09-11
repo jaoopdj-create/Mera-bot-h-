@@ -483,15 +483,19 @@ async def stream_handler(request: web.Request):
             )
 
 
-        return web.Response(
+response = web.StreamResponse(
+    status=206 if range_header else 200,
+    headers=headers
+)
 
-            status=206 if range_header else 200,
+await response.prepare(request)
 
-            body=body,
+async for chunk in body:
+    await response.write(chunk)
 
-            headers=headers
+await response.write_eof()
 
-        )
+return response
 
 
     except Exception as e:
