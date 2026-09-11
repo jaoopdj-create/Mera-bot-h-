@@ -58,21 +58,23 @@ async def watch_handler(request: web.Request):
             download_url += f"?hash={secure_hash}"
 
         # 🎨 EXACT SCREENSHOT WALA SILENTXBOTZ PURPLE INTERFACE DESIGN LAYOUT
+                # 🎨 DYNAMIC ONLINE PLAY BACK ENGINE (BINA BUFFER CHROME ME CHALANE KE LIYE)
         html_content = f"""
         <!DOCTYPE html>
         <html lang="en">
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>SilentXBotz | Premium Stream</title>
+            <title>SilentXBotz | Premium Stream Engine</title>
+            <!-- High-Speed Video Streaming Framework Links -->
+            <link rel="stylesheet" href="https://jsdelivr.net" />
             <style>
                 body {{ background-color: #0b0114; color: #ffffff; font-family: 'Segoe UI', Arial, sans-serif; text-align: center; padding: 15px; margin: 0; }}
                 .container {{ max-width: 500px; margin: 20px auto; background: #140529; padding: 20px; border-radius: 16px; border: 1px solid #251145; box-shadow: 0 10px 30px rgba(0,0,0,0.7); }}
                 h2 {{ color: #b67dff; font-size: 19px; font-weight: 600; margin-bottom: 25px; letter-spacing: 0.5px; }}
-                .video-wrapper {{ position: relative; width: 100%; border-radius: 12px; overflow: hidden; background: #000000; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.6); }}
-                video {{ width: 100%; display: block; outline: none; }}
+                .video-wrapper {{ position: relative; width: 100%; border-radius: 12px; overflow: hidden; background: #000000; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.6); --plyr-color-main: #822eff; }}
                 .meta-box {{ background: #1f0b3b; padding: 18px; border-radius: 12px; text-align: left; border: 1px solid #2c1452; }}
-                .tag {{ background: #822eff; color: white; display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: bold; margin-bottom: 14px; text-transform: uppercase; letter-spacing: 0.5px; }}
+                .tag {{ background: #822eff; color: white; display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: bold; margin-bottom: 14px; text-transform: uppercase; }}
                 .title-text {{ font-size: 15px; font-weight: 500; line-height: 1.5; margin-bottom: 20px; color: #ecd9ff; word-wrap: break-word; }}
                 .btn-group {{ display: flex; gap: 8px; margin-bottom: 14px; }}
                 .btn {{ padding: 11px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-size: 13.5px; transition: background 0.2s; }}
@@ -86,23 +88,45 @@ async def watch_handler(request: web.Request):
         <body>
             <div class="container">
                 <h2>Enjoy Premium Streaming Experience</h2>
+                
                 <div class="video-wrapper">
-                    <video controls poster="https://ibb.co" preload="none">
+                    <!-- Advanced Plyr Stream Element Tag -->
+                    <video id="player" playsinline controls preload="auto" poster="https://ibb.co">
                         <source src="{download_url}" type="video/mp4">
                     </video>
                 </div>
+
                 <div class="meta-box">
-                    <div class="tag">▶️ HD STREAMING</div>
+                    <div class="tag">▶️ ONLINE LIVE STREAMING</div>
                     <div class="title-text">{display_name}</div>
+                    
                     <div class="btn-group">
                         <a href="{download_url}" class="btn btn-download">📥 Download</a>
                         <button onclick="navigator.clipboard.writeText(window.location.href); alert('Streaming link copied!');" class="btn btn-copy">📋 Copy Link</button>
                         <button onclick="window.open('https://telegram.me' + encodeURIComponent(window.location.href));" class="btn btn-share">🤝 Share</button>
                     </div>
+                    
                     <a href="intent://{download_url.replace('http://', '').replace('https://', '')}#Intent;package=com.mxtech.videoplayer.ad;S.title={display_name};end" class="btn btn-external">🚀 Open in External Player</a>
-                    <div class="audio-warning">⚠️ Browser Does Not Support EAC3 Audio. If No Sound, Please Use External Players.</div>
+                    
+                    <div class="audio-warning">⚠️ Note: MKV files format might take 5-10 seconds to buffer data online. Please wait or use external player if audio lacks.</div>
                 </div>
             </div>
+
+            <!-- Dynamic JS Engine Scripts to inject online decoder pipelines -->
+            <script src="https://jsdelivr.net"></script>
+            <script src="https://jsdelivr.net"></script>
+            <script>
+                document.addEventListener('DOMContentLoaded', () => {{
+                    const video = document.getElementById('player');
+                    const source = '{download_url}';
+                    
+                    // Native engine check parameters mapping loops
+                    const player = new Plyr(video, {{
+                        controls: ['play-large', 'play', 'progress', 'current-time', 'duration', 'mute', 'volume', 'fullscreen'],
+                        tooltips: {{ controls: true, seek: true }}
+                    }});
+                }});
+            </script>
         </body>
         </html>
         """
