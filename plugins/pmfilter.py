@@ -1823,23 +1823,48 @@ async def send_file_handler(bot, query: CallbackQuery):
     except Exception:
         pass
         
-    file_id = query.data.split("#")[1]
-    file_info = await get_file_details(file_id)
+    file_id_data = query.data.split("#")
+    if len(file_id_data) > 1:
+        target_file_id = file_id_data[1]
+    else:
+        return await query.answer("❌ Invalid Button Data Token", show_alert=True)
+
+    file_info = await get_file_details(target_file_id)
     
     if not file_info:
-        return await query.answer("❌ s... ғɪʟᴇ ɴᴏᴛ ʙᴇᴇɴ ғᴏᴜɴᴅ!", show_alert=True)
+        return await query.answer("❌ sᴏʀʀʏ! ꜰɪʟᴇ ɴᴏᴛ ꜰᴏᴜɴᴅ ɪɴ ᴅᴀᴛᴀʙᴀsᴇ.", show_alert=True)
         
     try:
-        await bot.send_cached_media(
+        from utils import stream_buttons, get_size
+        s_btn = await stream_buttons(query.from_user.id, file_info.file_id)
+        
+        is_auto_del = AUTO_DELETE 
+        del_time = DELETE_TIME  
+        
+        caption_text = f"<b>📂 ғɪʟᴇ ɴᴀᴍᴇ:</b> <code>{file_info.file_name}</code>\n\n<b>⚖️ ғɪʟᴇ sɪᴢᴇ:</b> {get_size(file_info.file_size)}"
+        if is_auto_del:
+            caption_text += f"\n\n⚠️ <i>Yeh file aur iske links strict {int(del_time/60)} minute mein auto-delete ho jayenge! Please forward ya save kar lein.</i>"
+
+        sent_message = await bot.send_cached_media(
             chat_id=query.from_user.id,
             file_id=file_info.file_id,
-            caption=f"<b>📂 ғɪʟᴇ ɴᴀᴍᴇ:</b> <code>{file_info.file_name}</code>\n\n<b>⚖️ ғɪʟᴇ sɪᴢᴇ:</b> {get_size(file_info.file_size)}"
+            caption=caption_text,
+            reply_markup=InlineKeyboardMarkup(s_btn)
         )
+        
+        if is_auto_del:
+            async def auto_delete_task(msg, wait_seconds):
+                await asyncio.sleep(wait_seconds)
+                try:
+                    await msg.delete() 
+                except Exception:
+                    pass
+
+            asyncio.create_task(auto_delete_task(sent_message, del_time))
+
     except UserIsBlocked:
         await query.answer("❌ ᴘʟᴇᴀsᴇ sᴛᴀʀᴛ ᴛʜᴇ ʙᴏᴛ ɪɴ ᴘʀɪᴠᴀᴛᴇ ғɪʀsᴛ!", show_alert=True)
     except Exception as e:
-        logger.exception("Error sending file: %s", e)
+        logger.exception("Error sending file via button click: %s", e)
         await query.answer("❌ ғᴀɪʟᴇᴅ ᴛᴏ sᴇɴᴅ ғɪʟᴇ.", show_alert=True)
         
-
-    
