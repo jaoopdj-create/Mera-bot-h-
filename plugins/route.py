@@ -91,10 +91,13 @@ async def watch_handler(request: web.Request):
                 
                 <div class="video-wrapper">
                     <!-- Advanced Plyr Stream Element Tag -->
+                <div class="video-wrapper">
+                    <!-- Advanced Plyr Stream Element Tag (Fixed Poster URL) -->
                     <video id="player" playsinline controls preload="auto" poster="https://ibb.co">
                         <source src="{download_url}" type="video/mp4">
                     </video>
                 </div>
+                
 
                 <div class="meta-box">
                     <div class="tag">▶️ ONLINE LIVE STREAMING</div>
@@ -127,9 +130,21 @@ async def watch_handler(request: web.Request):
                     }});
                 }});
             </script>
-        </body>
-        </html>
-        """
+            <!-- High-Speed Video Streaming Framework Links -->
+    <link rel="stylesheet" href="https://jsdelivr.net" />
+    <script src="https://jsdelivr.net"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const video = document.getElementById('player');
+            const player = new Plyr(video, {
+                controls: ['play-large', 'play', 'progress', 'current-time', 'duration', 'mute', 'volume', 'fullscreen'],
+                ratio: '16:9'
+            });
+        });
+    </script>
+</body>
+</html>
+"""
         return web.Response(text=html_content, content_type='text/html')
     except Exception as e:
         raise web.HTTPInternalServerError(text=str(e))
