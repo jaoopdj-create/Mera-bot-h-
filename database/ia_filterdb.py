@@ -257,35 +257,11 @@ async def get_bad_files(query, file_type=None):
     files = files[:300]
     return files, len(files)
 
-async def get_file_details(query):
-    # 🛠️ ULTRA BYPASS: Agar scraper ka data hai toh direct dummy object return karo bina error ke
-    if "DOWNLOAD_LINK_MODE" in str(query):
-        clean_slug = str(query).replace("DOWNLOAD_LINK_MODE_", "")
-        clean_url = f"https://netmirror.center{clean_slug}"
-        
-        # Ek fake structure taiyar karna jo aapke bot ke filter engine ko pasand ho
-        dummy_file = {
-            "_id": query,
-            "file_id": query,
-            "file_name": clean_slug.replace("-", " ").title(),
-            "file_size": 1073741824,
-            "file_type": "video",
-            "download_link": clean_url,
-            "link": clean_url,
-            "caption": f"🎬 <b>Name :</b> <i>{clean_slug.replace('-', ' ').title()} [Dual Audio] HD.mkv</i>\n🍿 <b>Auto-Generated via Global Index Server</b>"
-        }
-        return [dummy_file] # Bot list format mangta hai isliye bracket me bhej rahe hain
-
-    # Baki normal forward ki hui files ke liye purana standard tareeqa chalne dein
-    filter = {"file_id": query}
-    tasks = [Media.find(filter).to_list(length=1)]
-    if MULTIPLE_DB:
-        tasks.append(Media2.find(filter).to_list(length=1))  
-    results = await asyncio.gather(*tasks)
-    for filedetails in results:
-        if filedetails:
-            return filedetails       
-    return []
+async def get_file_details(file_id):
+    file = await Media.find_one({"file_id": file_id})
+    if not file and MULTIPLE_DB:
+        file = await Media2.find_one({"file_id": file_id})
+    return file
 
 def encode_file_id(s: bytes) -> str:
     r = b""
