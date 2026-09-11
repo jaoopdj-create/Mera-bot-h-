@@ -32,7 +32,7 @@ async def watch_handler(request: web.Request):
         path = request.match_info["path"]
         secure_hash = request.rel_url.query.get("hash", "")
         
-        # 📌 FIX: Path me se direct Alphanumeric Token (letters aur numbers dono) extract karna
+        # 📌 FIX: Path me se direct Alphanumeric Token extract karna
         clean_id = path.split("/") if "/" in path else path
         
         index = min(work_loads, key=work_loads.get)
@@ -57,8 +57,7 @@ async def watch_handler(request: web.Request):
         if secure_hash:
             download_url += f"?hash={secure_hash}"
 
-        # 🎨 EXACT SCREENSHOT WALA SILENTXBOTZ PURPLE INTERFACE DESIGN LAYOUT
-                # 🎨 DYNAMIC ONLINE PLAY BACK ENGINE (BINA BUFFER CHROME ME CHALANE KE LIYE)
+        # 🎨 FIXED PREMIUM PLYR WEB PLAYER LAYOUT
         html_content = f"""
         <!DOCTYPE html>
         <html lang="en">
@@ -90,14 +89,11 @@ async def watch_handler(request: web.Request):
                 <h2>Enjoy Premium Streaming Experience</h2>
                 
                 <div class="video-wrapper">
-                    <!-- Advanced Plyr Stream Element Tag -->
-                <div class="video-wrapper">
                     <!-- Advanced Plyr Stream Element Tag (Fixed Poster URL) -->
                     <video id="player" playsinline controls preload="auto" poster="https://ibb.co">
                         <source src="{download_url}" type="video/mp4">
                     </video>
                 </div>
-                
 
                 <div class="meta-box">
                     <div class="tag">▶️ ONLINE LIVE STREAMING</div>
@@ -117,41 +113,26 @@ async def watch_handler(request: web.Request):
 
             <!-- Dynamic JS Engine Scripts to inject online decoder pipelines -->
             <script src="https://jsdelivr.net"></script>
-            <script src="https://jsdelivr.net"></script>
             <script>
                 document.addEventListener('DOMContentLoaded', () => {{
                     const video = document.getElementById('player');
-                    const source = '{download_url}';
-                    
-                    // Native engine check parameters mapping loops
                     const player = new Plyr(video, {{
                         controls: ['play-large', 'play', 'progress', 'current-time', 'duration', 'mute', 'volume', 'fullscreen'],
-                        tooltips: {{ controls: true, seek: true }}
+                        ratio: '16:9'
                     }});
                 }});
             </script>
-            <!-- High-Speed Video Streaming Framework Links -->
-    <link rel="stylesheet" href="https://jsdelivr.net" />
-    <script src="https://jsdelivr.net"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const video = document.getElementById('player');
-            const player = new Plyr(video, {
-                controls: ['play-large', 'play', 'progress', 'current-time', 'duration', 'mute', 'volume', 'fullscreen'],
-                ratio: '16:9'
-            });
-        });
-    </script>
-</body>
-</html>
-"""
+        </body>
+        </html>
+        """
         return web.Response(text=html_content, content_type='text/html')
     except Exception as e:
+        logging.critical(e.with_traceback(None))
         raise web.HTTPInternalServerError(text=str(e))
 
 # 📥 बैकएंड MEDIA STREAMER
 @routes.get(r"/{path:\S+}", allow_head=True)
-async def stream_handler(request: web.Response):
+async def stream_handler(request: web.Request):
     try:
         path = request.match_info["path"]
         clean_id = path.split("/") if "/" in path else path
@@ -179,6 +160,13 @@ async def stream_handler(request: web.Response):
             from_bytes = request.http_range.start or 0
             until_bytes = (request.http_range.stop or file_size) - 1
 
+        if (until_bytes > file_size) or (from_bytes < 0) or (until_bytes < from_bytes):
+            return web.Response(
+                status=416,
+                body="416: Range not satisfiable",
+                headers={"Content-Range": f"bytes */{file_size}"},
+            )
+
         chunk_size = 1024 * 1024
         until_bytes = min(until_bytes, file_size - 1)
         offset = from_bytes - (from_bytes % chunk_size)
@@ -201,8 +189,11 @@ async def stream_handler(request: web.Response):
                 "Content-Disposition": f'inline; filename="{file_name}"',
                 "Accept-Ranges": "bytes",
                 "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Methods": "GET, HEAD, OPTIONS",
+                "Access-Control-Allow-Headers": "Range, Content-Type",
+                "Access-Control-Expose-Headers": "Content-Length, Content-Range, Accept-Ranges",
             },
         )
     except Exception as e:
         raise web.HTTPInternalServerError(text=str(e))
-      
+        
