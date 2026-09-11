@@ -32,8 +32,8 @@ async def watch_handler(request: web.Request):
         path = request.match_info["path"]
         secure_hash = request.rel_url.query.get("hash", "")
         
-        # 📌 FIX: Path me se direct Alphanumeric Token extract karna
-        clean_id = path.split("/") if "/" in path else path
+        # 📌 FIX: Path me se correct Alphanumeric Token extract karna
+        clean_id = path.split("/")[-1] if "/" in path else path
         
         index = min(work_loads, key=work_loads.get)
         faster_client = multi_clients[index]
@@ -57,7 +57,7 @@ async def watch_handler(request: web.Request):
         if secure_hash:
             download_url += f"?hash={secure_hash}"
 
-        # 🎨 FIXED PREMIUM PLYR WEB PLAYER LAYOUT
+        # 🎨 FIXED SILENTXBOTZ PURPLE INTERFACE DESIGN LAYOUT
         html_content = f"""
         <!DOCTYPE html>
         <html lang="en">
@@ -65,8 +65,10 @@ async def watch_handler(request: web.Request):
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>SilentXBotz | Premium Stream Engine</title>
-            <!-- High-Speed Video Streaming Framework Links -->
-            <link rel="stylesheet" href="https://jsdelivr.net" />
+            
+            <!-- 📌 FULL CORRECT CSS LINK FROM CDNJS/JSDELIVR -->
+            <link rel="stylesheet" href="https://cloudflare.com" />
+            
             <style>
                 body {{ background-color: #0b0114; color: #ffffff; font-family: 'Segoe UI', Arial, sans-serif; text-align: center; padding: 15px; margin: 0; }}
                 .container {{ max-width: 500px; margin: 20px auto; background: #140529; padding: 20px; border-radius: 16px; border: 1px solid #251145; box-shadow: 0 10px 30px rgba(0,0,0,0.7); }}
@@ -89,8 +91,7 @@ async def watch_handler(request: web.Request):
                 <h2>Enjoy Premium Streaming Experience</h2>
                 
                 <div class="video-wrapper">
-                    <!-- Advanced Plyr Stream Element Tag (Fixed Poster URL) -->
-                    <video id="player" playsinline controls preload="auto" poster="https://ibb.co">
+                    <video id="player" playsinline controls preload="auto">
                         <source src="{download_url}" type="video/mp4">
                     </video>
                 </div>
@@ -111,14 +112,15 @@ async def watch_handler(request: web.Request):
                 </div>
             </div>
 
-            <!-- Dynamic JS Engine Scripts to inject online decoder pipelines -->
-            <script src="https://jsdelivr.net"></script>
+            <!-- 📌 FULL CORRECT JAVASCRIPT FRAMEWORK LINK -->
+            <script src="https://cloudflare.com"></script>
             <script>
                 document.addEventListener('DOMContentLoaded', () => {{
                     const video = document.getElementById('player');
                     const player = new Plyr(video, {{
                         controls: ['play-large', 'play', 'progress', 'current-time', 'duration', 'mute', 'volume', 'fullscreen'],
-                        ratio: '16:9'
+                        ratio: '16:9',
+                        tooltips: {{ controls: true, seek: true }}
                     }});
                 }});
             </script>
@@ -127,7 +129,6 @@ async def watch_handler(request: web.Request):
         """
         return web.Response(text=html_content, content_type='text/html')
     except Exception as e:
-        logging.critical(e.with_traceback(None))
         raise web.HTTPInternalServerError(text=str(e))
 
 # 📥 बैकएंड MEDIA STREAMER
@@ -135,7 +136,7 @@ async def watch_handler(request: web.Request):
 async def stream_handler(request: web.Request):
     try:
         path = request.match_info["path"]
-        clean_id = path.split("/") if "/" in path else path
+        clean_id = path.split("/")[-1] if "/" in path else path
         secure_hash = request.rel_url.query.get("hash", "")
         
         range_header = request.headers.get("Range", 0)
@@ -160,13 +161,6 @@ async def stream_handler(request: web.Request):
             from_bytes = request.http_range.start or 0
             until_bytes = (request.http_range.stop or file_size) - 1
 
-        if (until_bytes > file_size) or (from_bytes < 0) or (until_bytes < from_bytes):
-            return web.Response(
-                status=416,
-                body="416: Range not satisfiable",
-                headers={"Content-Range": f"bytes */{file_size}"},
-            )
-
         chunk_size = 1024 * 1024
         until_bytes = min(until_bytes, file_size - 1)
         offset = from_bytes - (from_bytes % chunk_size)
@@ -189,9 +183,6 @@ async def stream_handler(request: web.Request):
                 "Content-Disposition": f'inline; filename="{file_name}"',
                 "Accept-Ranges": "bytes",
                 "Access-Control-Allow-Origin": "*",
-                "Access-Control-Allow-Methods": "GET, HEAD, OPTIONS",
-                "Access-Control-Allow-Headers": "Range, Content-Type",
-                "Access-Control-Expose-Headers": "Content-Length, Content-Range, Accept-Ranges",
             },
         )
     except Exception as e:
