@@ -374,9 +374,10 @@ async def stream_handler(request: web.Request):
             file_id = FileId.decode(clean_id)
 
         except Exception:
-            # Fallback for numeric message IDs
+            # Fallback for numeric message ID
             try:
                 message_id = int(clean_id)
+
                 file_id = await tg_connect.get_file_properties(
                     message_id
                 )
@@ -386,11 +387,30 @@ async def stream_handler(request: web.Request):
                     text="Invalid file ID"
                 )
 
-        file_size = file_id.file_size
+        # Get file information
+        try:
+            file_info = await tg_connect.client.get_file(
+                clean_id
+            )
+
+            file_size = file_info.file_size
+
+            file_name = (
+                file_info.file_path.split("/")[-1]
+                if file_info.file_path
+                else "video"
+            )
+
+        except Exception:
+            raise web.HTTPBadRequest(
+                text="Unable to get file information"
+            )
+
         range_header = request.headers.get("Range")
 
-        # Handle browser range request
+        # Handle range request
         if range_header:
+
             byte_range = (
                 range_header
                 .replace("bytes=", "")
@@ -405,6 +425,7 @@ async def stream_handler(request: web.Request):
                 until_bytes = file_size - 1
 
         else:
+
             from_bytes = 0
             until_bytes = file_size - 1
 
@@ -413,6 +434,7 @@ async def stream_handler(request: web.Request):
             file_size - 1
         )
 
+        # Chunk size: 1 MB
         chunk_size = 1024 * 1024
 
         offset = (
@@ -441,6 +463,7 @@ async def stream_handler(request: web.Request):
             offset / chunk_size
         )
 
+        # Stream file from Telegram
         body = tg_connect.yield_file(
             file_id,
             index,
@@ -452,13 +475,9 @@ async def stream_handler(request: web.Request):
         )
 
         mime_type = (
-            file_id.mime_type
-            or "application/octet-stream"
-        )
-
-        file_name = (
-            file_id.file_name
-            or "video"
+            "video/mp4"
+            if file_name.lower().endswith(".mp4")
+            else "application/octet-stream"
         )
 
         headers = {
