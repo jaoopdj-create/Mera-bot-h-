@@ -1825,13 +1825,12 @@ async def send_file_handler(bot, query: CallbackQuery):
         
     file_id_data = query.data.split("#")
     if len(file_id_data) > 1:
-        # Yeh aapka asli unique token hai jo button click se aa raha h
-        real_telegram_token = file_id_data[1]
+        # Asli Telegram data parameter token nikalna
+        target_token = file_id_data[1]
     else:
         return await query.answer("❌ Invalid Button Data Token", show_alert=True)
 
-    # Database query ke liye short ID pass karenge
-    file_info = await get_file_details(real_telegram_token)
+    file_info = await get_file_details(target_token)
     
     if not file_info:
         return await query.answer("❌ sᴏʀʀʏ! ꜰɪʟᴇ ɴᴏᴛ ꜰᴏᴜɴᴅ ɪɴ ᴅᴀᴛᴀʙᴀsᴇ.", show_alert=True)
@@ -1839,40 +1838,42 @@ async def send_file_handler(bot, query: CallbackQuery):
     try:
         from utils import get_size
         
-        # URL title clean helper slug
+        # URL parsing ke liye clean title generator slug
         clean_title = re.sub(r"[^\w\-_.]", "-", file_info.file_name.lower())
         clean_title = re.sub(r"-+", "-", clean_title).strip("-")
         
-        # 🚀 FIX HERE: Hum `real_telegram_token` bhej rahe hain taaki URL me real dynamic token jaye
-        # Isse Render web server bina load pade instantly file fetch kar lega aur "Not Found" gayab ho jayegi.
-        stream_link = f"{URL}watch/{real_telegram_token}/{clean_title}"
-        download_link = f"{URL}download/{real_telegram_token}/{clean_title}"
+        # Secure token calculation wrapper mapping paths
+        # Yahan hum path me id format feed kar rahe hain jo routes.py dhoondh raha h
+        stream_link = f"{URL}watch/{target_token}/{clean_title}"
         
-        # High-Speed Optimized Interface Buttons
-        stream_buttons = [
+        # SCREENSHOT INTERFACE BUTTON KEYBOARDS STRUCTURE
+        premium_interface_buttons = [
             [
-                InlineKeyboardButton("🖥️ STREAM", url=stream_link),
-                InlineKeyboardButton("📥 DOWNLOAD", url=download_link)
+                InlineKeyboardButton("Generate Streaming Link", url=stream_link)
             ],
             [
-                InlineKeyboardButton("📌 JOIN UPDATES CHANNEL 📌", url=CHANNEL_LINK)
+                InlineKeyboardButton("Update Channel ↗️", url=CHANNEL_LINK)
             ]
         ]
         
         is_auto_del = AUTO_DELETE 
-        del_time = DELETE_TIME  # info.py se automatic 300 seconds sync hai
+        del_time = DELETE_TIME  # info.py se automatic synced h (300 seconds)
         
-        caption_text = f"<b>📂 ғɪʟᴇ ɴᴀᴍᴇ:</b> <code>{file_info.file_name}</code>\n\n<b>⚖️ ғɪʟᴇ sɪᴢᴇ:</b> {get_size(file_info.file_size)}"
+        caption_text = (
+            f"<b>📂 ғɪʟᴇ ɴᴀᴍᴇ:</b> <code>{file_info.file_name}</code>\n\n"
+            f"<b>⚖️ ғɪʟᴇ sɪᴢᴇ:</b> {get_size(file_info.file_size)}\n\n"
+            f"<b>📩 UPLOADED BY: @Movieparkerbot</b>"
+        )
 
-        # 1. Main media cache box forward karna
+        # 1. Main media cached object forward karna user private window me
         sent_message = await bot.send_cached_media(
             chat_id=query.from_user.id,
             file_id=file_info.file_id, 
             caption=caption_text,
-            reply_markup=InlineKeyboardMarkup(stream_buttons)
+            reply_markup=InlineKeyboardMarkup(premium_interface_buttons)
         )
         
-        # 2. Timer info text alert box push karna
+        # 2. Asynchronous automatic deletion warning template system
         if is_auto_del:
             alert_message = await bot.send_message(
                 chat_id=query.from_user.id,
@@ -1880,7 +1881,7 @@ async def send_file_handler(bot, query: CallbackQuery):
                 reply_to_message_id=sent_message.id
             )
 
-            # 3. Asynchronous non-blocking countdown handler
+            # 3. Non-blocking countdown database tracking loop
             async def auto_delete_task(msg, alert_msg, wait_seconds):
                 await asyncio.sleep(wait_seconds) 
                 try:
@@ -1900,6 +1901,6 @@ async def send_file_handler(bot, query: CallbackQuery):
     except UserIsBlocked:
         await query.answer("❌ ᴘʟᴇᴀsᴇ sᴛᴀʀᴛ ᴛʜᴇ ʙᴏᴛ ɪɴ ᴘʀɪᴠᴀᴛᴇ ғɪʀsᴛ!", show_alert=True)
     except Exception as e:
-        logger.exception("Error sending file via button click: %s", e)
-        await query.answer("❌ ғᴀɪʟᴇᴅ ᴛᴏ sᴇɴᴅ ғɪʟᴇ.", show_alert=True)
+        logger.exception("Error sending stream links: %s", e)
+        await query.answer("❌ %s" % e, show_alert=True)
         
