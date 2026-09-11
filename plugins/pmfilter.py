@@ -1825,11 +1825,13 @@ async def send_file_handler(bot, query: CallbackQuery):
         
     file_id_data = query.data.split("#")
     if len(file_id_data) > 1:
-        db_id = file_id_data[1]
+        # Yeh aapka asli unique token hai jo button click se aa raha h
+        real_telegram_token = file_id_data[1]
     else:
         return await query.answer("❌ Invalid Button Data Token", show_alert=True)
 
-    file_info = await get_file_details(db_id)
+    # Database query ke liye short ID pass karenge
+    file_info = await get_file_details(real_telegram_token)
     
     if not file_info:
         return await query.answer("❌ sᴏʀʀʏ! ꜰɪʟᴇ ɴᴏᴛ ꜰᴏᴜɴᴅ ɪɴ ᴅᴀᴛᴀʙᴀsᴇ.", show_alert=True)
@@ -1837,16 +1839,16 @@ async def send_file_handler(bot, query: CallbackQuery):
     try:
         from utils import get_size
         
-        # 🚀 ZERO-LOAD LIGHTWEIGHT STREAM ENGINE
-        # URL se spaces aur faltu characters hatana taaki routing 0.01s me execute ho
+        # URL title clean helper slug
         clean_title = re.sub(r"[^\w\-_.]", "-", file_info.file_name.lower())
         clean_title = re.sub(r"-+", "-", clean_title).strip("-")
         
-        # Direct clean path token strings jisse web server processing memory clean rahegi
-        stream_link = f"{URL}watch/{file_info.file_id}/{clean_title}"
-        download_link = f"{URL}download/{file_info.file_id}/{clean_title}"
+        # 🚀 FIX HERE: Hum `real_telegram_token` bhej rahe hain taaki URL me real dynamic token jaye
+        # Isse Render web server bina load pade instantly file fetch kar lega aur "Not Found" gayab ho jayegi.
+        stream_link = f"{URL}watch/{real_telegram_token}/{clean_title}"
+        download_link = f"{URL}download/{real_telegram_token}/{clean_title}"
         
-        # High-Speed Multi-Thread Responsive Buttons Setup
+        # High-Speed Optimized Interface Buttons
         stream_buttons = [
             [
                 InlineKeyboardButton("🖥️ STREAM", url=stream_link),
@@ -1858,11 +1860,11 @@ async def send_file_handler(bot, query: CallbackQuery):
         ]
         
         is_auto_del = AUTO_DELETE 
-        del_time = DELETE_TIME  # info.py se synced (300 seconds)
+        del_time = DELETE_TIME  # info.py se automatic 300 seconds sync hai
         
         caption_text = f"<b>📂 ғɪʟᴇ ɴᴀᴍᴇ:</b> <code>{file_info.file_name}</code>\n\n<b>⚖️ ғɪʟᴇ sɪᴢᴇ:</b> {get_size(file_info.file_size)}"
 
-        # 1. Main video message forward karna buttons ke sath
+        # 1. Main media cache box forward karna
         sent_message = await bot.send_cached_media(
             chat_id=query.from_user.id,
             file_id=file_info.file_id, 
@@ -1870,7 +1872,7 @@ async def send_file_handler(bot, query: CallbackQuery):
             reply_markup=InlineKeyboardMarkup(stream_buttons)
         )
         
-        # 2. Dual-Alert System: 5 min timer ka extra text box bhejenge
+        # 2. Timer info text alert box push karna
         if is_auto_del:
             alert_message = await bot.send_message(
                 chat_id=query.from_user.id,
@@ -1878,23 +1880,21 @@ async def send_file_handler(bot, query: CallbackQuery):
                 reply_to_message_id=sent_message.id
             )
 
-            # 3. Non-blocking asynchronous deletion loop background workers ke liye
+            # 3. Asynchronous non-blocking countdown handler
             async def auto_delete_task(msg, alert_msg, wait_seconds):
                 await asyncio.sleep(wait_seconds) 
                 try:
-                    await msg.delete() # Pahle video message udayega
+                    await msg.delete() 
                 except Exception:
                     pass
                 
                 try:
-                    # Phir screenshot ki tarah niche wale text ko badal dega
                     await alert_msg.edit_text(
                         text="<b>YOUR VIDEO / FILE IS SUCCESSFULLY DELETED !!</b>"
                     )
                 except Exception:
                     pass
 
-            # Task ko direct event loop scheduler pe bhejna taaki API freeze na ho
             asyncio.create_task(auto_delete_task(sent_message, alert_message, del_time))
 
     except UserIsBlocked:
