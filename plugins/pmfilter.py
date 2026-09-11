@@ -1825,6 +1825,7 @@ async def send_file_handler(bot, query: CallbackQuery):
         
     file_id_data = query.data.split("#")
     if len(file_id_data) > 1:
+        # Strict token array placement index check
         target_file_id = file_id_data[1]
     else:
         return await query.answer("❌ Invalid Button Data Token", show_alert=True)
@@ -1836,10 +1837,13 @@ async def send_file_handler(bot, query: CallbackQuery):
         
     try:
         from utils import stream_buttons, get_size
-        s_btn = await stream_buttons(query.from_user.id, file_info.file_id)
+        
+        # 📌 CRITICAL FIX: Web Server (route.py) ko properly fetch karne ke liye 
+        # original string token pass kiya jaa raha hai taaki "Not Found" error na aaye.
+        s_btn = await stream_buttons(query.from_user.id, target_file_id)
         
         is_auto_del = AUTO_DELETE 
-        del_time = DELETE_TIME  # Default: 300 seconds (5 min)
+        del_time = DELETE_TIME  # Default: 300 seconds (5 min) from info.py
         
         caption_text = f"<b>📂 ғɪʟᴇ ɴᴀᴍᴇ:</b> <code>{file_info.file_name}</code>\n\n<b>⚖️ ғɪʟᴇ sɪᴢᴇ:</b> {get_size(file_info.file_size)}"
 
@@ -1851,26 +1855,25 @@ async def send_file_handler(bot, query: CallbackQuery):
             reply_markup=InlineKeyboardMarkup(s_btn)
         )
         
-        # 2. Agar AUTO_DELETE enabled hai toh timer notification text send karein
+        # 2. Timer notification text message ko reply format me send karein
         if is_auto_del:
-            # Screenshot jaisa exact automatic text alert message
             alert_message = await bot.send_message(
                 chat_id=query.from_user.id,
                 text=f"♻️ <b>THIS FILE WILL AUTO DELETE AFTER {int(del_time/60)} MINUTE</b>",
-                reply_to_message_id=sent_message.id # Isse reply format me jud jayega
+                reply_to_message_id=sent_message.id 
             )
 
-            # 3. Background process countdown handler
+            # 3. Asynchronous background auto-delete operation loop
             async def auto_delete_task(msg, alert_msg, wait_seconds):
-                await asyncio.sleep(wait_seconds) # 5 minute wait karega
+                await asyncio.sleep(wait_seconds) # 5 minute countdown wait
                 
-                # Pahle main video file ko delete karein
+                # Pahle main video file message delete karein
                 try:
                     await msg.delete() 
                 except Exception:
                     pass
                 
-                # Phir niche wale alert message ko badal kar "Successfully Deleted" ka text daal dein
+                # Phir alert message ko text transform karke "Successfully Deleted" kar dein
                 try:
                     await alert_msg.edit_text(
                         text="<b>YOUR VIDEO / FILE IS SUCCESSFULLY DELETED !!</b>"
@@ -1878,12 +1881,12 @@ async def send_file_handler(bot, query: CallbackQuery):
                 except Exception:
                     pass
 
-            # Background process me forward karna taaki bot crash na ho
+            # Background thread worker stack pe schedule karna taaki chat navigation lock na ho
             asyncio.create_task(auto_delete_task(sent_message, alert_message, del_time))
 
     except UserIsBlocked:
         await query.answer("❌ ᴘʟᴇᴀsᴇ sᴛᴀʀᴛ ᴛʜᴇ ʙᴏᴛ ɪɴ ᴘʀɪᴠᴀᴛᴇ ғɪʀsᴛ!", show_alert=True)
     except Exception as e:
         logger.exception("Error sending file via button click: %s", e)
-        await query.answer("❌ ғᴀɪʟᴇᴅ ᴛᴏ sᴇɴᴅ ғɪʟᴇ.", show_alert=True)
-        
+        await query.answer("❌ ғᴀɪʟᴇᴅ ᴛᴏ sᴇɴᴅ ꜰɪʟᴇ.", show_alert=True)
+    
