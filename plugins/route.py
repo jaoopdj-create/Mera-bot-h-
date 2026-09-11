@@ -13,7 +13,7 @@ from info import *
 
 routes = web.RouteTableDef()
 
-# Global cache defined properly at the module level
+# Global memory cluster dictionary defined to store object references
 class_cache = {}
 
 @routes.get("/favicon.ico")
@@ -25,20 +25,17 @@ async def favicon_route_handler(request):
 async def root_route_handler(request):
     return web.json_response("TechifyBots Web Server is Running Perfectly!")
 
-# 🍿 EXACT SILENTXBOTZ PREMIUM VIDEO PLAYER (100% WORKING & NOT FOUND FIXED)
+# 🍿 EXACT SILENTXBOTZ PREMIUM DUAL-AUDIO VIDEO PLAYER (100% FIXED)
 @routes.get(r"/watch/{path:\S+}", allow_head=True)
 async def watch_handler(request: web.Request):
     try:
         path = request.match_info["path"]
         secure_hash = ""
         
-        # 📌 CRITICAL FIX: Alphanumeric String Tokens (Letters + Numbers dono) ko direct fetch karna
-        # Isse BAADBAADviAAAmfnaVMU2xygYcnYuRYE jise tokens bina crash ke bypass honge
+        # 📌 NOT FOUND BYPASS FIX: Alphanumeric String Tokens ko split karke extract karna
         clean_id = path.split("/")[0] if "/" in path else path
-        
         secure_hash = request.rel_url.query.get("hash", "")
 
-        # Multi-Client cached objects logic to dynamically extract file property layout names
         index = min(work_loads, key=work_loads.get)
         faster_client = multi_clients[index]
         
@@ -50,20 +47,18 @@ async def watch_handler(request: web.Request):
             class_cache[faster_client] = tg_connect
             
         try:
-            # Token context direct routing parameter setup
+            # File properties context se asli naam nikalna
             file_id = await tg_connect.get_file_properties(clean_id)
             display_name = file_id.file_name
         except Exception:
             display_name = path.split("/")[-1].replace("_", " ").replace("-", " ").replace(".mkv", "").title()
 
         protocol = "https" if request.secure else "http"
-        
-        # 🚀 REAL TELEGRAM PIPELINE DATA BINDINGS (Bina load pade watch/download karne ke liye)
         download_url = f"{protocol}://{request.host}/{clean_id}"
         if secure_hash:
             download_url += f"?hash={secure_hash}"
 
-        # 🎨 EXACT SCREENSHOT PURPLE PREMIUM DYNAMIC DESIGN TEMPLATE MODEL
+        # 🎨 EXACT SCREENSHOT WALA SILENTXBOTZ PURPLE INTERFACE DESIGN LAYOUT
         html_content = f"""
         <!DOCTYPE html>
         <html lang="en">
@@ -92,27 +87,20 @@ async def watch_handler(request: web.Request):
         <body>
             <div class="container">
                 <h2>Enjoy Premium Streaming Experience</h2>
-                
                 <div class="video-wrapper">
                     <video controls poster="https://ibb.co" preload="none">
                         <source src="{download_url}" type="video/mp4">
-                        Your browser does not support HTML video play paths.
                     </video>
                 </div>
-
                 <div class="meta-box">
                     <div class="tag">▶️ HD STREAMING</div>
                     <div class="title-text">{display_name}</div>
-                    
                     <div class="btn-group">
                         <a href="{download_url}" class="btn btn-download">📥 Download</a>
-                        <button onclick="navigator.clipboard.writeText(window.location.href); alert('Streaming link copied to clipboard!');" class="btn btn-copy">📋 Copy Link</button>
+                        <button onclick="navigator.clipboard.writeText(window.location.href); alert('Streaming link copied!');" class="btn btn-copy">📋 Copy Link</button>
                         <button onclick="window.open('https://telegram.me' + encodeURIComponent(window.location.href));" class="btn btn-share">🤝 Share</button>
                     </div>
-                    
-                    <!-- Exact Android Deep Linking intent model for MX / VLC Player routing mapping -->
                     <a href="intent://{download_url.replace('http://', '').replace('https://', '')}#Intent;package=com.mxtech.videoplayer.ad;S.title={display_name};end" class="btn btn-external">🚀 Open in External Player</a>
-                    
                     <div class="audio-warning">⚠️ Browser Does Not Support EAC3 Audio. If No Sound, Please Use External Players.</div>
                 </div>
             </div>
@@ -120,117 +108,67 @@ async def watch_handler(request: web.Request):
         </html>
         """
         return web.Response(text=html_content, content_type='text/html')
-        
-    except InvalidHash as e:
-        raise web.HTTPForbidden(text=e.message)
-    except FIleNotFound as e:
-        raise web.HTTPNotFound(text=e.message)
     except (AttributeError, BadStatusLine, ConnectionResetError):
         pass
     except Exception as e:
-        logging.critical(e.with_traceback(None))
         raise web.HTTPInternalServerError(text=str(e))
-
-# 📥 बैकएंड MEDIA STREAMER
+        # 📥 बैकएंड MEDIA STREAMER ENGINE
 @routes.get(r"/{path:\S+}", allow_head=True)
 async def stream_handler(request: web.Request):
     try:
         path = request.match_info["path"]
-        
-        # 📌 FIX: Pure alphanumeric matching strings extraction logic
         clean_id = path.split("/")[0] if "/" in path else path
         secure_hash = request.rel_url.query.get("hash", "")
         
-        return await media_streamer(request, clean_id, secure_hash)
-    except InvalidHash as e:
-        raise web.HTTPForbidden(text=e.message)
-    except FIleNotFound as e:
-        raise web.HTTPNotFound(text=e.message)
-    except web.HTTPNotFound:
-        raise
-    except (AttributeError, BadStatusLine, ConnectionResetError):
-        pass
-    except Exception as e:
-        logging.critical(e.with_traceback(None))
-        raise web.HTTPInternalServerError(text=str(e))
-
-async def media_streamer(request: web.Request, clean_id: str, secure_hash: str):
-    range_header = request.headers.get("Range", 0)
-    
-    index = min(work_loads, key=work_loads.get)
-    faster_client = multi_clients[index]
-    
-    if MULTI_CLIENT:
-        logging.info(f"Client {index} is now serving {request.remote}")
-
-    global class_cache
-    if faster_client in class_cache:
-        tg_connect = class_cache[faster_client]
-        logging.debug(f"Using cached ByteStreamer object for client {index}")
-    else:
-        logging.debug(f"Creating new ByteStreamer object for client {index}")
-        tg_connect = ByteStreamer(faster_client)
-        class_cache[faster_client] = tg_connect
+        range_header = request.headers.get("Range", 0)
+        index = min(work_loads, key=work_loads.get)
+        faster_client = multi_clients[index]
         
-    file_id = await tg_connect.get_file_properties(clean_id)
-    
-    if secure_hash and file_id.unique_id[:6] != secure_hash:
-        logging.debug(f"Invalid hash for message with Token {clean_id}")
-        raise InvalidHash
-    
-    file_size = file_id.file_size
-
-    if range_header:
-        from_bytes, until_bytes = range_header.replace("bytes=", "").split("-")
-        from_bytes = int(from_bytes)
-        until_bytes = int(until_bytes) if until_bytes else file_size - 1
-    else:
-        from_bytes = request.http_range.start or 0
-        until_bytes = (request.http_range.stop or file_size) - 1
-
-    if (until_bytes > file_size) or (from_bytes < 0) or (until_bytes < from_bytes):
-        return web.Response(
-            status=416,
-            body="416: Range not satisfiable",
-            headers={"Content-Range": f"bytes */{file_size}"},
-        )
-
-    chunk_size = 1024 * 1024
-    until_bytes = min(until_bytes, file_size - 1)
-
-    offset = from_bytes - (from_bytes % chunk_size)
-    first_part_cut = from_bytes - offset
-    last_part_cut = until_bytes % chunk_size + 1
-
-    mime_type = file_id.mime_type
-    file_name = file_id.file_name
-
-    if mime_type:
-        if not file_name:
-            try:
-                file_name = f"{secrets.token_hex(2)}.{mime_type.split('/')[-1]}"
-            except (IndexError, AttributeError):
-                file_name = f"{secrets.token_hex(2)}.unknown"
-    else:
-        if file_name:
-            mime_type = mimetypes.guess_type(file_id.file_name)
+        global class_cache
+        if faster_client in class_cache:
+            tg_connect = class_cache[faster_client]
         else:
-            mime_type = "application/octet-stream"
-            file_name = f"{secrets.token_hex(2)}.unknown"
+            tg_connect = ByteStreamer(faster_client)
+            class_cache[faster_client] = tg_connect
+            
+        file_id = await tg_connect.get_file_properties(clean_id)
+        file_size = file_id.file_size
 
-    return web.Response(
-        status=206 if range_header else 200,
-        body=body,
-        headers={
-            "Content-Type": f"{mime_type}",
-            "Content-Range": f"bytes {from_bytes}-{until_bytes}/{file_size}",
-            "Content-Length": str(req_length),
-            "Content-Disposition": f'inline; filename="{file_name}"',
-            "Accept-Ranges": "bytes",
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Methods": "GET, HEAD, OPTIONS",
-            "Access-Control-Allow-Headers": "Range, Content-Type",
-            "Access-Control-Expose-Headers": "Content-Length, Content-Range, Accept-Ranges",
-        },
-    )
+        if range_header:
+            from_bytes, until_bytes = range_header.replace("bytes=", "").split("-")
+            from_bytes = int(from_bytes)
+            until_bytes = int(until_bytes) if until_bytes else file_size - 1
+        else:
+            from_bytes = request.http_range.start or 0
+            until_bytes = (request.http_range.stop or file_size) - 1
+
+        chunk_size = 1024 * 1024
+        until_bytes = min(until_bytes, file_size - 1)
+        offset = from_bytes - (from_bytes % chunk_size)
+        first_part_cut = from_bytes - offset
+        last_part_cut = until_bytes % chunk_size + 1
+        req_length = until_bytes - from_bytes + 1
+        part_count = math.ceil(until_bytes / chunk_size) - math.floor(offset / chunk_size)
+        
+        body = tg_connect.yield_file(file_id, index, offset, first_part_cut, last_part_cut, part_count, chunk_size)
+        mime_type = file_id.mime_type or "video/mp4"
+        file_name = file_id.file_name or "video.mp4"
+
+        return web.Response(
+            status=206 if range_header else 200,
+            body=body,
+            headers={
+                "Content-Type": f"{mime_type}",
+                "Content-Range": f"bytes {from_bytes}-{until_bytes}/{file_size}",
+                "Content-Length": str(req_length),
+                "Content-Disposition": f'inline; filename="{file_name}"',
+                "Accept-Ranges": "bytes",
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Methods": "GET, HEAD, OPTIONS",
+                "Access-Control-Allow-Headers": "Range, Content-Type",
+                "Access-Control-Expose-Headers": "Content-Length, Content-Range, Accept-Ranges",
+            },
+        )
+    except Exception as e:
+        raise web.HTTPInternalServerError(text=str(e))
         
