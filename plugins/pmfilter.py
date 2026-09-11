@@ -1825,24 +1825,24 @@ async def send_file_handler(bot, query: CallbackQuery):
         
     file_id_data = query.data.split("#")
     if len(file_id_data) > 1:
-        db_id = file_id_data
+        # 📌 CRITICAL DYNAMIC INDEX MAPPING FIX:
+        # Array token index ko explicitly map kiya h taaki bot database se movie properties load kr ske
+        db_id = file_id_data[1]
     else:
         return await query.answer("❌ Invalid Button Data Token", show_alert=True)
 
     file_info = await get_file_details(db_id)
     
     if not file_info:
-        return await query.answer("❌ sᴏʀʀʏ! ꜰɪʟᴇ ɴᴏᴛ ꜰᴏᴜɴᴅ ɪɴ ᴅᴀᴛᴀʙᴀsᴇ.", show_alert=True)
+        return await query.answer("❌ sᴏʀʀʏ! 🇧 🇮 🇱 🇰 🇺 🇱  🇫 🇮 🇱 🇪  🇳 🇴 🇹  🇫 🇴 🇺 🇳 🇩 .", show_alert=True)
         
     try:
         from utils import get_size
         
-        # 🚀 THE ULTIMATE UNBREAKABLE LINK FIX:
-        # Yahan humne .com/watch/ ke beech me structural slash direct code me lock kar diya h
-        # Ab domain aur token kabhi bhi aapas me nahi chipkega aur link perfectly generate hoga!
+        # 🚀 EXACT HARDCODED ACTIVE ROUTING PATH FOR BUTTON
         stream_link = f"https://onrender.com{db_id}"
         
-        # Branded premium inline button setup
+        # SCREENSHOT INTERFACE ACCORDING INLINE BUTTON SETUP
         premium_buttons = [
             [
                 InlineKeyboardButton("Generate Streaming Link", url=stream_link)
@@ -1853,7 +1853,7 @@ async def send_file_handler(bot, query: CallbackQuery):
         ]
         
         is_auto_del = AUTO_DELETE 
-        del_time = DELETE_TIME  # info.py se automatic sync hai (300 seconds)
+        del_time = DELETE_TIME  # info.py se automatic synced h (300s)
         
         caption_text = (
             f"<b>📂 ғɪʟᴇ ɴᴀᴍᴇ:</b> <code>{file_info.file_name}</code>\n\n"
@@ -1861,7 +1861,7 @@ async def send_file_handler(bot, query: CallbackQuery):
             f"<b>📩 UPLOADED BY: @Movieparkerbot</b>"
         )
 
-        # 1. Main media cache box user private window me forward karna
+        # 1. Main media cache block send karna user private box me
         sent_message = await bot.send_cached_media(
             chat_id=query.from_user.id,
             file_id=file_info.file_id, 
@@ -1869,7 +1869,7 @@ async def send_file_handler(bot, query: CallbackQuery):
             reply_markup=InlineKeyboardMarkup(premium_buttons)
         )
         
-        # 2. Timer text notification alert push karna
+        # 2. Timer info text alert box push karna
         if is_auto_del:
             alert_message = await bot.send_message(
                 chat_id=query.from_user.id,
@@ -1877,7 +1877,7 @@ async def send_file_handler(bot, query: CallbackQuery):
                 reply_to_message_id=sent_message.id
             )
 
-            # 3. Asynchronous countdown auto-deletion task block
+            # 3. Asynchronous background countdown auto delete worker
             async def auto_delete_task(msg, alert_msg, wait_seconds):
                 await asyncio.sleep(wait_seconds) 
                 try:
@@ -1886,7 +1886,7 @@ async def send_file_handler(bot, query: CallbackQuery):
                     pass
                 
                 try:
-                    await alert_msg.edit_text(
+                    alert_msg.edit_text(
                         text="<b>YOUR VIDEO / FILE IS SUCCESSFULLY DELETED !!</b>"
                     )
                 except Exception:
