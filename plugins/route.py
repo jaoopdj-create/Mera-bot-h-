@@ -482,7 +482,7 @@ async def stream_handler(request: web.Request):
                 f"{until_bytes}/{file_size}"
             )
 
-                response = web.StreamResponse(
+        response = web.StreamResponse(
             status=206 if range_header else 200,
             headers=headers
         )
@@ -495,7 +495,6 @@ async def stream_handler(request: web.Request):
         await response.write_eof()
 
         return response
-
 
 
     except Exception as e:
