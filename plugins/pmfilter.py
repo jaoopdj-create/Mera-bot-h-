@@ -1816,4 +1816,30 @@ async def auto_save_on_forward(client, message):
         # अगर कोई अंदरूनी दिक्कत होगी तो बोट एरर साफ बताएगा
         await message.reply_text(f"❌ Saving me dikkat aayi: {e}")
 
+@Client.on_callback_query(filters.regex(r"^file#"))
+async def send_file_handler(bot, query: CallbackQuery):
+    try:
+        await query.answer()
+    except Exception:
+        pass
+        
+    file_id = query.data.split("#")[1]
+    file_info = await get_file_details(file_id)
+    
+    if not file_info:
+        return await query.answer("❌ s... ғɪʟᴇ ɴᴏᴛ ʙᴇᴇɴ ғᴏᴜɴᴅ!", show_alert=True)
+        
+    try:
+        await bot.send_cached_media(
+            chat_id=query.from_user.id,
+            file_id=file_info.file_id,
+            caption=f"<b>📂 ғɪʟᴇ ɴᴀᴍᴇ:</b> <code>{file_info.file_name}</code>\n\n<b>⚖️ ғɪʟᴇ sɪᴢᴇ:</b> {get_size(file_info.file_size)}"
+        )
+    except UserIsBlocked:
+        await query.answer("❌ ᴘʟᴇᴀsᴇ sᴛᴀʀᴛ ᴛʜᴇ ʙᴏᴛ ɪɴ ᴘʀɪᴠᴀᴛᴇ ғɪʀsᴛ!", show_alert=True)
+    except Exception as e:
+        logger.exception("Error sending file: %s", e)
+        await query.answer("❌ ғᴀɪʟᴇᴅ ᴛᴏ sᴇɴᴅ ғɪʟᴇ.", show_alert=True)
+        
+
     
