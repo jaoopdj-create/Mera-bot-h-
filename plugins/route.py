@@ -1,7 +1,7 @@
 import math
+from pyrogram.file_id import FileId
 
 from aiohttp import web
-
 from web import multi_clients, work_loads
 from web.custom_dl import ByteStreamer
 
@@ -360,31 +360,36 @@ function () {{
 
 
 # Media streaming route
-# Media streaming route
 @routes.get(r"/{path:\S+}", allow_head=True)
 async def stream_handler(request: web.Request):
 
     try:
-
         path = request.match_info["path"]
         clean_id = path.split("/")[-1]
 
-        try:
-            message_id = int(clean_id)
-        except ValueError:
-            raise web.HTTPBadRequest(
-                text="Invalid file ID"
-            )
-
         tg_connect, index = await get_streamer()
 
-        file_id = await tg_connect.get_file_properties(
-            message_id
-        )
+        # Decode Telegram File ID
+        try:
+            file_id = FileId.decode(clean_id)
+
+        except Exception:
+            # Fallback for numeric message IDs
+            try:
+                message_id = int(clean_id)
+                file_id = await tg_connect.get_file_properties(
+                    message_id
+                )
+
+            except Exception:
+                raise web.HTTPBadRequest(
+                    text="Invalid file ID"
+                )
 
         file_size = file_id.file_size
         range_header = request.headers.get("Range")
 
+        # Handle browser range request
         if range_header:
             byte_range = (
                 range_header
@@ -398,6 +403,7 @@ async def stream_handler(request: web.Request):
                 until_bytes = int(byte_range[1])
             else:
                 until_bytes = file_size - 1
+
         else:
             from_bytes = 0
             until_bytes = file_size - 1
@@ -483,6 +489,9 @@ async def stream_handler(request: web.Request):
         await response.write_eof()
 
         return response
+
+    except web.HTTPException:
+        raise
 
     except Exception as e:
         raise web.HTTPInternalServerError(
