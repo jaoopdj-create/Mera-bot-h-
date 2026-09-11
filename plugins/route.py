@@ -482,20 +482,20 @@ async def stream_handler(request: web.Request):
                 f"{until_bytes}/{file_size}"
             )
 
+                response = web.StreamResponse(
+            status=206 if range_header else 200,
+            headers=headers
+        )
 
-response = web.StreamResponse(
-    status=206 if range_header else 200,
-    headers=headers
-)
+        await response.prepare(request)
 
-await response.prepare(request)
+        async for chunk in body:
+            await response.write(chunk)
 
-async for chunk in body:
-    await response.write(chunk)
+        await response.write_eof()
 
-await response.write_eof()
+        return response
 
-return response
 
 
     except Exception as e:
